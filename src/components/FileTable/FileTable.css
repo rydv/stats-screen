@@ -1,0 +1,46 @@
+.file-table-container {
+  margin: 20px;
+}
+
+.file-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #97D700;
+}
+
+.file-table th,
+.file-table td {
+  padding: 12px;
+  text-align: left;
+}
+
+.file-table th {
+  background-color: #0F5499;
+  color: #FFFFFF;
+  font-weight: bold;
+}
+
+.file-table tr:nth-child(even) {
+  background-color: #E6EEF7;
+}
+
+.file-table tr:nth-child(odd) {
+  background-color: #F5F9FF;
+}
+
+.file-table button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2em;
+  color: #0F5499;
+}
+
+.file-table button:hover {
+  color: #97D700;
+}
