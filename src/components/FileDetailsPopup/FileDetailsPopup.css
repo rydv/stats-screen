@@ -19,6 +19,8 @@
   display: flex;
   flex-direction: column;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .header-bar {
@@ -34,7 +36,7 @@
 
 .header-bar h2 {
   margin: 0;
-  font-size: 1.2em;
+  font-size: 1.1em;
 }
 
 .header-icons {
@@ -116,7 +118,7 @@
 }
 
 .progress-label {
-  font-size: 0.8em;
+  font-size: 0.75em;
   text-align: center;
 }
 
@@ -129,9 +131,6 @@
 .file-info, .run-summary {
   margin-bottom: 20px;
   text-align: left;
-}
-
-.file-info {
   background-color: #f8f8f8;
   padding: 15px;
   border-radius: 5px;
@@ -140,28 +139,68 @@
 
 .file-info h3, .run-summary h3 {
   color: #0F5F96;
-  margin-bottom: 10px;
-  border-bottom: 2px solid #0F5F96;
+  margin-bottom: 15px;
+  border-bottom: 1px solid #D4D4D4;
   padding-bottom: 5px;
   text-align: left;
+  font-size: 1.1em;
 }
 
 .file-info p {
-  margin: 5px 0;
+  margin: 8px 0;
+}
+
+.run-summary .matches {
+  margin-bottom: 20px;
+}
+
+.run-summary .matches-count {
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 5px;
+  padding: 15px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.run-summary .matches-count h4 {
+  color: #0F5F96;
+  margin-bottom: 12px;
+  font-size: 1em;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 8px;
 }
 
 .run-summary table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0 8px;
 }
 
 .run-summary th, .run-summary td {
-  padding: 8px;
-  border-bottom: 1px solid #ddd;
+  padding: 10px;
   text-align: left;
+  font-size: 0.9em;
 }
 
-.run-summary th {
+.run-summary tr {
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.run-summary tr:hover {
+  background-color: #e8e8e8;
+}
+
+.run-summary td:first-child {
   font-weight: bold;
-  background-color: #f2f2f2;
+  color: #0F5F96;
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+}
+
+.run-summary td:last-child {
+  text-align: right;
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
 }

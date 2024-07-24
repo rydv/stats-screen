@@ -60,23 +60,22 @@ class FileDetailsPopup extends React.Component<Props> {
     return (
       <div className="run-summary">
         <h3>Run Summary</h3>
-        <table>
-          <tbody>
-            <tr>
-              <th>Matches</th>
-              <td>{matches}</td>
-            </tr>
-            <tr>
-              <th colSpan={2}>Matches Count</th>
-            </tr>
-            {Object.entries(matches_count).map(([rule, count]) => (
-              <tr key={rule}>
-                <td>{rule}</td>
-                <td>{count}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="matches">
+          <strong>Matches:</strong> {matches}
+        </div>
+        <div className="matches-count">
+          <h4>Matches Count:</h4>
+          <table>
+            <tbody>
+              {Object.entries(matches_count).map(([rule, count]) => (
+                <tr key={rule}>
+                  <td>{rule}</td>
+                  <td>{count}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     );
   }
