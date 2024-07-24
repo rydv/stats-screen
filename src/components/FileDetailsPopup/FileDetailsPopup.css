@@ -26,7 +26,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 15px 20px;
-  background-color: #0F5F96; /* Standard Chartered blue */
+  background-color: #0F5F96;
   color: white;
   border-top-left-radius: 8px;
   border-top-right-radius: 8px;
@@ -55,30 +55,113 @@
   display: flex;
   justify-content: space-between;
   padding: 20px 40px;
-  align-items: center;
-  margin-top: 20px; /* Added top margin */
+  align-items: flex-start;
+  margin-top: 20px;
 }
 
 .progress-line {
   position: absolute;
-  top: 50%;
+  top: 28px;
   left: 40px;
   right: 40px;
   height: 2px;
-  background-color: #D4D4D4; /* Light grey line */
+  background-color: #D4D4D4;
   z-index: 1;
 }
 
-.progress-dot {
-  width: 16px; /* Increased from 12px to 16px */
-  height: 16px; /* Increased from 12px to 16px */
-  background-color: #0F5F96; /* Standard Chartered blue */
-  border-radius: 50%;
+.progress-line.blue {
+  background-color: #0F5F96;
+}
+
+.progress-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   z-index: 2;
+}
+
+.progress-dot {
+  width: 16px;
+  height: 16px;
+  background-color: #0F5F96;
+  border-radius: 50%;
+  margin-bottom: 8px;
+}
+
+.progress-dot.blue {
+  background-color: #0F5F96;
+}
+
+.progress-dot.red {
+  background-color: #FF0000;
+}
+
+.progress-dot.yellow {
+  background-color: #FFD700;
+}
+
+.progress-dot.blank {
+  background-color: #FFFFFF;
+  border: 2px solid #D4D4D4;
+}
+
+.progress-dot.blink {
+  animation: blink 1s linear infinite;
+}
+
+@keyframes blink {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+.progress-label {
+  font-size: 0.8em;
+  text-align: center;
 }
 
 .content-area {
   flex-grow: 1;
   padding: 20px;
   overflow-y: auto;
+}
+
+.file-info, .run-summary {
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.file-info {
+  background-color: #f8f8f8;
+  padding: 15px;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.file-info h3, .run-summary h3 {
+  color: #0F5F96;
+  margin-bottom: 10px;
+  border-bottom: 2px solid #0F5F96;
+  padding-bottom: 5px;
+  text-align: left;
+}
+
+.file-info p {
+  margin: 5px 0;
+}
+
+.run-summary table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.run-summary th, .run-summary td {
+  padding: 8px;
+  border-bottom: 1px solid #ddd;
+  text-align: left;
+}
+
+.run-summary th {
+  font-weight: bold;
+  background-color: #f2f2f2;
 }
