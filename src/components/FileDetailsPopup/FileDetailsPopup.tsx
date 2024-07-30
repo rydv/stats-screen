@@ -24,31 +24,108 @@ interface Props {
   };
 }
 
+interface StatusMapping {
+  status: FileData['progressStatus'];
+  label: string;
+  color: string;
+}
+
+interface ProgressStep {
+  stepName: string;
+  statusMappings: StatusMapping[];
+}
+
 class FileDetailsPopup extends React.Component<Props> {
+  private progressSteps: ProgressStep[] = [
+    {
+      stepName: "In-queue",
+      statusMappings: [{
+        status: 'inqueue',
+        label: 'In Queue',
+        color: 'blue'
+      }]
+    },
+    {
+      stepName: "Initiation",
+      statusMappings: [{
+        status: 'initiated',
+        label: 'Initiating',
+        color: 'yellow'
+      }, {
+        status: 'initiated',
+        label: 'Initiated',
+        color: 'blue'
+      }]
+    },
+    {
+      stepName: "Validation",
+      statusMappings: [{
+        status: 'validated',
+        label: 'Validating',
+        color: 'yellow'
+      }, {
+        status: 'validated',
+        label: 'Validation Successful',
+        color: 'blue'
+      }, {
+        status: 'validationFailed',
+        label: 'Validation Failed',
+        color: 'red'
+      }]
+    },
+    {
+      stepName: "Processing",
+      statusMappings: [{
+        status: 'processing',
+        label: 'Processing',
+        color: 'yellow'
+      }, {
+        status: 'processed',
+        label: 'Processing Complete',
+        color: 'blue'
+      }, {
+        status: 'processingFailed',
+        label: 'Processing Failed',
+        color: 'red'
+      }]
+    },
+    {
+      stepName: "Report Generation",
+      statusMappings: [{
+        status: 'reportGenerated',
+        label: 'Generating Report',
+        color: 'yellow'
+      }, {
+        status: 'reportGenerated',
+        label: 'Report Generated',
+        color: 'blue'
+      }]
+    }
+  ];
+
   getProgressColor(step: number): string {
     const { progressStatus } = this.props.file;
-    const stepOrder = ['inqueue', 'initiated', 'validated', 'processing', 'reportGenerated'];
-    const currentStepIndex = stepOrder.indexOf(progressStatus);
+    const currentStep = this.progressSteps.findIndex(s =>
+      s.statusMappings.some(mapping => mapping.status === progressStatus)
+    );
 
-    if (step < currentStepIndex) {
+    if (step < currentStep) {
       return 'blue';
-    } else if (step === currentStepIndex) {
-      switch (progressStatus) {
-        case 'processing':
-          return 'yellow blink';
-        case 'validationFailed':
-        case 'processingFailed':
-          return 'red';
-        default:
-          return 'blue';
-      }
+    } else if (step === currentStep) {
+      const statusMapping = this.progressSteps[step].statusMappings.find(
+        mapping => mapping.status === progressStatus
+      );
+      return statusMapping ? statusMapping.color : 'blank';
     }
     return 'blank';
   }
 
   getStatusLabel(step: number): string {
-    const labels = ['In Queue', 'Initiated', 'Validated', 'Processing', 'Completed'];
-    return labels[step];
+    const { progressStatus } = this.props.file;
+    const statusMapping = this.progressSteps[step].statusMappings.find(
+      mapping => mapping.status === progressStatus
+    );
+    return statusMapping ? statusMapping.label : this.progressSteps[step].stepName;
   }
 
   renderRunSummary() {
@@ -98,11 +175,11 @@ class FileDetailsPopup extends React.Component<Props> {
             </div>
           </div>
           <div className="progress-bar">
-            <div className={`progress-line ${this.getProgressColor(4)}`}></div>
-            {[0, 1, 2, 3, 4].map((step) => (
-              <div key={step} className="progress-step">
-                <div className={`progress-dot ${this.getProgressColor(step)}`}></div>
-                <div className="progress-label">{this.getStatusLabel(step)}</div>
+            <div className={`progress-line ${this.getProgressColor(this.progressSteps.length - 1)}`}></div>
+            {this.progressSteps.map((step, index) => (
+              <div key={index} className="progress-step">
+                <div className={`progress-dot ${this.getProgressColor(index)}`}></div>
+                <div className="progress-label">{this.getStatusLabel(index)}</div>
               </div>
             ))}
           </div>
