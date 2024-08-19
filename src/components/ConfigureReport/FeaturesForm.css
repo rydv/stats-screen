@@ -1,0 +1,30 @@
+.features-form {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    width: 45%;
+  }
+  
+  .features-form div {
+    margin-bottom: 15px;
+  }
+  
+  .features-form label {
+    display: block;
+    margin-bottom: 5px;
+    color: #0f5f8c;
+  }
+  
+  .features-form input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #c4d8e6;
+    border-radius: 4px;
+  }
+  
+  .features-form input:focus {
+    outline: none;
+    border-color: #7ab2d3;
+  }
+  

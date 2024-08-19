@@ -1,0 +1,36 @@
+.configure-report {
+    background-color: #f5f7fa;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+  }
+  
+  .configure-report h1 {
+    color: #0f5f8c;
+    margin-bottom: 20px;
+  }
+  
+  .main-content {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  
+  .actions {
+    display: flex;
+    justify-content: flex-end;
+  }
+  
+  .actions button {
+    background-color: #97c6e3;
+    color: #0f5f8c;
+    border: none;
+    padding: 10px 20px;
+    margin-left: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .actions button:hover {
+    background-color: #7ab2d3;
+  }
+  
