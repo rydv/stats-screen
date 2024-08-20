@@ -22,43 +22,49 @@ class FeaturesForm extends Component<FeaturesFormProps> {
 
     return (
       <form className="features-form">
-        <div>
-          <label htmlFor="reportName">Report Name:</label>
-          <input
-            type="text"
-            id="reportName"
-            name="reportName"
-            value={reportName}
-            onChange={this.handleInputChange}
-          />
+        <div className="form-row">
+          <div className="form-group">
+            <label htmlFor="reportName">Report Name:</label>
+            <input
+              type="text"
+              id="reportName"
+              name="reportName"
+              value={reportName}
+              onChange={this.handleInputChange}
+              placeholder="Enter report name"
+            />
+          </div>
         </div>
-        <div>
-          <label htmlFor="instance">Instance:</label>
-          <select
-            id="instance"
-            name="instance"
-            value={instance}
-            onChange={this.handleInputChange}
-          >
-            <option value="">Select an instance</option>
-            {INSTANCES.map((inst) => (
-              <option key={inst} value={inst}>{inst}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label htmlFor="country">Country:</label>
-          <select
-            id="country"
-            name="country"
-            value={country}
-            onChange={this.handleInputChange}
-          >
-            <option value="">Select a country</option>
-            {COUNTRIES.map((cntry) => (
-              <option key={cntry} value={cntry}>{cntry}</option>
-            ))}
-          </select>
+        <div className="form-row">
+          <div className="form-group">
+            <label htmlFor="instance">Instance:</label>
+            <select
+              id="instance"
+              name="instance"
+              value={instance}
+              onChange={this.handleInputChange}
+            >
+              <option value="">Select an instance</option>
+              {INSTANCES.map((inst) => (
+                <option key={inst} value={inst}>{inst}</option>
+              ))}
+            </select>
+          </div>
+          <div className="form-group">
+            <label htmlFor="country">Country:</label>
+            <select
+              id="country"
+              name="country"
+              value={country}
+              onChange={this.handleInputChange}
+              disabled={!instance}
+            >
+              <option value="">Select a country</option>
+              {COUNTRIES.map((cntry) => (
+                <option key={cntry} value={cntry}>{cntry}</option>
+              ))}
+            </select>
+          </div>
         </div>
       </form>
     );
