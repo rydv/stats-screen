@@ -6,6 +6,7 @@ interface FeaturesFormProps {
   instance: string;
   country: string;
   onChange: (name: string, value: string) => void;
+  disabled?: boolean;
 }
 
 const INSTANCES = ['Instance 1', 'Instance 2', 'Instance 3'];
@@ -13,12 +14,14 @@ const COUNTRIES = ['USA', 'UK', 'Germany', 'France', 'Japan'];
 
 class FeaturesForm extends Component<FeaturesFormProps> {
   handleInputChange = (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = event.target;
-    this.props.onChange(name, value);
+    if (!this.props.disabled) {
+      const { name, value } = event.target;
+      this.props.onChange(name, value);
+    }
   };
 
   render() {
-    const { reportName, instance, country } = this.props;
+    const { reportName, instance, country, disabled } = this.props;
 
     return (
       <form className="features-form">
@@ -32,6 +35,7 @@ class FeaturesForm extends Component<FeaturesFormProps> {
               value={reportName}
               onChange={this.handleInputChange}
               placeholder="Enter report name"
+              disabled={disabled}
             />
           </div>
         </div>
@@ -43,6 +47,7 @@ class FeaturesForm extends Component<FeaturesFormProps> {
               name="instance"
               value={instance}
               onChange={this.handleInputChange}
+              disabled={disabled}
             >
               <option value="">Select an instance</option>
               {INSTANCES.map((inst) => (
@@ -57,7 +62,7 @@ class FeaturesForm extends Component<FeaturesFormProps> {
               name="country"
               value={country}
               onChange={this.handleInputChange}
-              disabled={!instance}
+              disabled={disabled || !instance}
             >
               <option value="">Select a country</option>
               {COUNTRIES.map((cntry) => (

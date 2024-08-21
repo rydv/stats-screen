@@ -1,0 +1,51 @@
+.rule-sheet-version {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.rule-sheet-version h2 {
+  color: #0f5f8c;
+  margin-bottom: 15px;
+  text-align: left;
+}
+
+.version-card {
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 15px;
+}
+
+.rule-sheet-version table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.rule-sheet-version th,
+.rule-sheet-version td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.rule-sheet-version th {
+  background-color: #f8f9fa;
+  font-weight: bold;
+  color: #0f5f8c;
+}
+
+.rule-sheet-version tr:last-child td {
+  border-bottom: none;
+}
+
+.rule-sheet-version .download-icon {
+  font-size: 1.2em;
+  cursor: pointer;
+}
+
+.rule-sheet-version .download-icon:hover {
+  opacity: 0.7;
+}
