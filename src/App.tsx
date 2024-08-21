@@ -1,16 +1,88 @@
-import React from 'react';
+import React, { Component } from 'react';
 import './App.css';
-import FileTable from './components/FileTable/FileTable';
 import ConfigureReport from './components/ConfigureReport/ConfigureReport';
+import ReportDetails from './components/ReportDetails/ReportDetails';
 
-function App() {
-  return (
-    <div className="App">
-      <h1>File Table</h1>
-      {/* <FileTable /> */}
-      <ConfigureReport />
-    </div>
-  );
+interface AppState {
+  currentScreen: 'configure' | 'details';
+  reportOutput: any | null;
+  notification: { message: string; type: 'loading' | 'success' | 'error' } | null;
+}
+
+class App extends Component<{}, AppState> {
+  state: AppState = {
+    currentScreen: 'configure',
+    reportOutput: null,
+    notification: null,
+  };
+
+  notificationTimeout: NodeJS.Timeout | null = null;
+
+  handleReportSubmit = (output: any) => {
+    this.setState({
+      currentScreen: 'details',
+      reportOutput: output,
+    });
+  };
+
+  setNotification = (message: string, type: 'loading' | 'success' | 'error') => {
+    this.setState({ notification: { message, type } });
+
+    if (this.notificationTimeout) {
+      clearTimeout(this.notificationTimeout);
+    }
+
+    if (type !== 'loading') {
+      this.notificationTimeout = setTimeout(() => {
+        this.setState({ notification: null });
+      }, 5000);
+    }
+  };
+
+  clearNotification = () => {
+    this.setState({ notification: null });
+    if (this.notificationTimeout) {
+      clearTimeout(this.notificationTimeout);
+    }
+  };
+
+  render() {
+    return (
+      <div className="App">
+        <header className="App-header">
+          <div className="logo-container">
+            <img src="https://placehold.co/200x100?text=Analytics+Logo" alt="Analytics Logo" className="logo" />
+            <span className="header-text">STATS SCREEN</span>
+          </div>
+          <nav className="horizontal-menu">
+            <ul>
+              <li><a href="#">Home</a></li>
+              <li><a href="#">Reports</a></li>
+              <li><a href="#">Analytics</a></li>
+            </ul>
+          </nav>
+        </header>
+        {this.state.notification && (
+          <div className={`notification-bar ${this.state.notification.type}`}>
+            {this.state.notification.message}
+            {this.state.notification.type === 'loading' ? (
+              <div className="loading-animation"></div>
+            ) : (
+              <span className="close-icon" onClick={this.clearNotification}>×</span>
+            )}
+          </div>
+        )}
+        {this.state.currentScreen === 'configure' ? (
+          <ConfigureReport 
+            onSubmitSuccess={this.handleReportSubmit} 
+            setNotification={this.setNotification}
+          />
+        ) : (
+          <ReportDetails output={this.state.reportOutput} />
+        )}
+      </div>
+    );
+  }
 }
 
 export default App;

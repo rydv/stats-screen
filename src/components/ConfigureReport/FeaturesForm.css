@@ -1,5 +1,5 @@
 .features-form {
-  background-color: #ffffff;
+  background-color: #c5ecdc;
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -15,6 +15,7 @@
 .form-group {
   flex: 1;
   margin-right: 10px;
+  /* padding-right: 50px;  */
 }
 
 .form-group:last-child {
@@ -25,9 +26,19 @@
   display: block;
   margin-bottom: 5px;
   color: #0f5f8c;
+  text-align: left;
 }
 
-.features-form input,
+.features-form input{
+  width: 98%;
+  padding: 8px;
+  border: 1px solid #c4d8e6;
+  border-radius: 4px;
+  background-color: #ffffff;
+  color: #0f5f8c;
+  /* margin-right: 50px; */
+}
+
 .features-form select {
   width: 100%;
   padding: 8px;

@@ -7,3 +7,100 @@ h1 {
   color: #333;
   margin-bottom: 20px;
 }
+
+/* Header styles */
+.App-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f8f8f8;
+  padding: 10px 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+}
+
+.logo {
+  height: 40px;
+  margin-right: 10px;
+}
+
+.header-text {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+}
+
+.horizontal-menu ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+}
+
+.horizontal-menu li {
+  margin-right: 20px;
+}
+
+.horizontal-menu a {
+  text-decoration: none;
+  color: #333;
+  font-weight: bold;
+}
+
+.horizontal-menu a:hover {
+  color: #007bff;
+}
+
+.home-icon {
+  font-size: 24px;
+  color: #333;
+}
+
+.notification-bar {
+  position: fixed;
+  top: 60px; /* Adjust this value based on your header height */
+  left: 0;
+  right: 0;
+  background-color: #f0f8ff;
+  color: #0f5f8c;
+  padding: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 1000;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.notification-bar.success {
+  background-color: #e6f7e6;
+  color: #2e7d32;
+}
+
+.notification-bar.error {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.close-icon {
+  cursor: pointer;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.loading-animation {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #0f5f8c;
+  border-top: 2px solid #f0f8ff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
