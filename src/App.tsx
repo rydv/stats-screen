@@ -2,16 +2,17 @@ import React, { Component } from 'react';
 import './App.css';
 import ConfigureReport from './components/ConfigureReport/ConfigureReport';
 import ReportDetails from './components/ReportDetails/ReportDetails';
+import ReportsPage from './components/ReportsPage/ReportsPage';
 
 interface AppState {
-  currentScreen: 'configure' | 'details';
+  currentScreen: 'reports' | 'configure' | 'details';
   reportOutput: any | null;
   notification: { message: string; type: 'loading' | 'success' | 'error' } | null;
 }
 
 class App extends Component<{}, AppState> {
   state: AppState = {
-    currentScreen: 'configure',
+    currentScreen: 'reports',
     reportOutput: null,
     notification: null,
   };
@@ -46,6 +47,10 @@ class App extends Component<{}, AppState> {
     }
   };
 
+  changeScreen = (screen: 'reports' | 'configure' | 'details') => {
+    this.setState({ currentScreen: screen });
+  };
+
   render() {
     return (
       <div className="App">
@@ -56,8 +61,8 @@ class App extends Component<{}, AppState> {
           </div>
           <nav className="horizontal-menu">
             <ul>
-              <li><a href="#">Home</a></li>
-              <li><a href="#">Reports</a></li>
+              <li><a href="#" onClick={() => this.setState({ currentScreen: 'reports' })}>Home</a></li>
+              <li><a href="#" onClick={() => this.setState({ currentScreen: 'configure' })}>Configure Report</a></li>
               <li><a href="#">Analytics</a></li>
             </ul>
           </nav>
@@ -72,12 +77,14 @@ class App extends Component<{}, AppState> {
             )}
           </div>
         )}
-        {this.state.currentScreen === 'configure' ? (
+        {this.state.currentScreen === 'reports' && <ReportsPage onConfigureReport={() => this.changeScreen('configure')}/>}
+        {this.state.currentScreen === 'configure' && (
           <ConfigureReport 
             onSubmitSuccess={this.handleReportSubmit} 
             setNotification={this.setNotification}
           />
-        ) : (
+        )}
+        {this.state.currentScreen === 'details' && (
           <ReportDetails output={this.state.reportOutput} />
         )}
       </div>

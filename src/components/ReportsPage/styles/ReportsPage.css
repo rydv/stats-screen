@@ -1,0 +1,33 @@
+.landing-page {
+  max-width: 1200px;
+  margin: 50px auto;
+  padding: 20px;
+}
+
+.header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.header-container h2 {
+  color: #0f5f8c;
+  margin: 0;
+  text-align: left;
+}
+
+.configure-report-button {
+  background-color: #69a363;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s;
+}
+
+.configure-report-button:hover {
+  background-color: #86BF00;
+}
