@@ -1,0 +1,41 @@
+
+configured_reports_index
+
+Purpose: Store metadata about configured reports
+Fields:
+    - report_id (string)
+    - reportName (string)
+    - instance (string)
+    - country (string)
+    - currentFileName (string)
+    - previousFileName (string)
+    - version (integer)
+    - createdAt (date)
+    - updatedAt (date)
+    - report_runs_index
+
+
+Purpose: Store information about report runs
+Fields:
+    - report_id (string)
+    - runId (string)
+    - lastProcessingDate (date)
+    - processStartTime (date)
+    - processEndTime (date)
+    - totalTimeTaken (string)
+    - status (string)
+    - runSummary (object)
+    - matches (string)
+    - matches_count (object)
+    - rule_sheet_versions_index
+
+Purpose: Store information about rule sheet versions
+Fields:
+    - report_id (string)
+    - version (integer)
+    - uploadedDate (date)
+    - numberOfRules (integer)
+    - updatedBy (string)
+    - fileName (string)
+
+These indices will allow us to store and retrieve the necessary information for each component. We can create APIs to interact with these indices and use axios in our React components to fetch the data.

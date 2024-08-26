@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import './styles/ConfiguredReportsTable.css';
 
-interface Report {
+interface IReport {
   reportName: string;
   instance: string;
   country: string;
@@ -10,13 +10,14 @@ interface Report {
   lastRunDate: string;
 }
 
-interface ConfiguredReportsTableProps {
-  reports: Report[];
+interface IConfiguredReportsTableProps {
+  reports: IReport[];
+  isLoading: boolean;
 }
 
-class ConfiguredReportsTable extends Component<ConfiguredReportsTableProps> {
+class ConfiguredReportsTable extends Component<IConfiguredReportsTableProps> {
   render() {
-    const { reports } = this.props;
+    const { reports, isLoading } = this.props;
 
     return (
       <table className="reports-table">
@@ -31,16 +32,26 @@ class ConfiguredReportsTable extends Component<ConfiguredReportsTableProps> {
           </tr>
         </thead>
         <tbody>
-          {reports.map((report, index) => (
-            <tr key={index}>
-              <td>{report.reportName}</td>
-              <td>{report.instance}</td>
-              <td>{report.country}</td>
-              <td>{report.lastUpdatedDate}</td>
-              <td>{report.updatedBy}</td>
-              <td>{report.lastRunDate}</td>
+          {isLoading ? (
+            <tr>
+              <td colSpan={6} className="fetching">Fetching...</td>
             </tr>
-          ))}
+          ) : reports.length === 0 ? (
+            <tr>
+              <td colSpan={6} className="no-reports">No reports found</td>
+            </tr>
+          ) : (
+            reports.map((report, index) => (
+              <tr key={index}>
+                <td>{report.reportName}</td>
+                <td>{report.instance}</td>
+                <td>{report.country}</td>
+                <td>{report.lastUpdatedDate}</td>
+                <td>{report.updatedBy}</td>
+                <td>{report.lastRunDate}</td>
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
     );
