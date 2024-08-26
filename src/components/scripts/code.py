@@ -1,42 +1,54 @@
-@app.route('/api/report-run/<report_id>', methods=['GET'])
-def get_report_run(report_id):
-    try:
-        result = es.search(index='report_runs_index', body={
-            "query": {
-                "term": {"report_id": report_id}
-            },
-            "sort": [
-                {"processStartTime": {"order": "desc"}}
-            ],
-            "size": 1
-        })
+from elasticsearch import Elasticsearch
+from datetime import datetime, timedelta
+import uuid
 
-        if result['hits']['total']['value'] == 0:
-            return jsonify({"status": "error", "message": "Report run not found"}), 404
+es = Elasticsearch([{'host': 'localhost', 'port': 9200}])
 
-        report_run = result['hits']['hits'][0]['_source']
+INDEX_NAME = 'report_runs_index'
 
-        # Remove ITEM_IDS from the response
-        if 'runSummary' in report_run:
-            if 'matches_info' in report_run['runSummary']:
-                for rule in report_run['runSummary']['matches_info']:
-                    if 'ITEM_IDS' in report_run['runSummary']['matches_info'][rule]:
-                        del report_run['runSummary']['matches_info'][rule]['ITEM_IDS']
-            if 'unmatched_info' in report_run['runSummary']:
-                for rule in report_run['runSummary']['unmatched_info']:
-                    if 'ITEM_IDS' in report_run['runSummary']['unmatched_info'][rule]:
-                        del report_run['runSummary']['unmatched_info'][rule]['ITEM_IDS']
+# Define the mapping
+mapping = {
+    "mappings": {
+        "properties": {
+            "report_id": {"type": "keyword"},
+            "runId": {"type": "keyword"},
+            "lastProcessingDate": {"type": "date"},
+            "processStartTime": {"type": "date"},
+            "processEndTime": {"type": "date"},
+            "totalTimeTaken": {"type": "text"},
+            "status": {"type": "keyword"},
+            "runSummary": {
+                "type": "object",
+                "properties": {
+                    "matches": {"type": "text"},
+                    "matches_info": {
+                        "type": "object",
+                        "dynamic": True,
+                        "properties": {
+                            "count": {"type": "integer"},
+                            "ITEM_IDS": {"type": "text", "index": False}
+                        }
+                    },
+                    "unmatched_info": {
+                        "type": "object",
+                        "dynamic": True,
+                        "properties": {
+                            "count": {"type": "integer"},
+                            "ITEM_IDS": {"type": "text", "index": False}
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
-        return jsonify({
-            "status": "success",
-            "data": report_run
-        }), 200
+# Create the index with the mapping
+if not es.indices.exists(index=INDEX_NAME):
+    es.indices.create(index=INDEX_NAME, body=mapping)
+    print(f"Created index: {INDEX_NAME}")
 
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
-    
-
-
+# Function to insert run data
 def insert_run_data(report_id):
     run_data = {
         "report_id": report_id,
@@ -75,5 +87,10 @@ def insert_run_data(report_id):
         }
     }
 
-    result = es.index(index='report_runs_index', body=run_data)
+    result = es.index(index=INDEX_NAME, body=run_data)
     return result['_id']
+
+# Insert dummy data
+dummy_report_id = "REPORT_001"
+inserted_id = insert_run_data(dummy_report_id)
+print(f"Inserted run data with ID: {inserted_id}")
