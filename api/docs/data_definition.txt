@@ -1,0 +1,462 @@
+We have our matched data stored on an elastic index, here matched data means reconciled bank transactions, we will discuss it in detail later. But for now I will give some basic details about the fields in each transaction. Each transaction has:
+
+ITEM_ID(unique_id), 
+COUNTRY,
+AGENT_CODE - a sub-category under country, 
+LOCAL_ACC_NO/SET_ID - a sub-category under agent_code,  
+VALUE_DATE- date of transaction
+AMOUNT
+RELATIONSHIP_ID - this id is shared across its set of matched transactions(transactions with the same relationship_id means the net amount in that relationship group is zero, and there is a business logic(rule set) they are satisfying)
+SFIELD7 - contains transaction-related details
+SFIELD8 - contains transaction-related details
+SFIELD9 - contains transaction-related details
+REFERENCE - contains transaction-related details
+
+
+
+SAMPLE data
+Here's a data collection meeting your requirements, consisting of:
+
+6 relationship IDs with 2 transactions each
+3 relationship IDs with 3 transactions each
+1 relationship ID with 5 transactions
+Data Collection
+json
+Copy code
+[
+    // 6 relationship IDs with 2 transactions each (8 SYSTEM, 2 MANUAL)
+    {
+        "ITEM_ID": "TXN001",
+        "COUNTRY": "India",
+        "AGENT_CODE": "IND001",
+        "LOCAL_ACC_NO": "IND001-ACC01",
+        "VALUE_DATE": "2024-06-01",
+        "AMOUNT": 5000.00,
+        "RELATIONSHIP_ID": "REL001",
+        "SFIELD7": "Payment for invoice 1001",
+        "SFIELD8": "Service Charge",
+        "SFIELD9": "Account Transfer",
+        "REFERENCE": "STAND CHART 4636773 PVT LTD",
+        "C_OR_D": "L CR",
+        "L/S": "Ledger",
+        "ACTION": "SYSTEM"
+    },
+    {
+        "ITEM_ID": "TXN002",
+        "COUNTRY": "India",
+        "AGENT_CODE": "IND001",
+        "LOCAL_ACC_NO": "IND001-ACC02",
+        "VALUE_DATE": "2024-06-02",
+        "AMOUNT": -5000.00,
+        "RELATIONSHIP_ID": "REL001",
+        "SFIELD7": "Refund for invoice 1001",
+        "SFIELD8": "Service Charge Reversal",
+        "SFIELD9": "Account Transfer",
+        "REFERENCE": "STAND CHART 4636773 PVT LTD",
+        "C_OR_D": "L DR",
+        "L/S": "Ledger",
+        "ACTION": "SYSTEM"
+    },
+    {
+        "ITEM_ID": "TXN003",
+        "COUNTRY": "USA",
+        "AGENT_CODE": "USA001",
+        "LOCAL_ACC_NO": "USA001-ACC01",
+        "VALUE_DATE": "2024-06-03",
+        "AMOUNT": 12000.00,
+        "RELATIONSHIP_ID": "REL002",
+        "SFIELD7": "Payment for invoice 2002",
+        "SFIELD8": "Consulting Fees",
+        "SFIELD9": "Account Transfer",
+        "REFERENCE": "JPMORGAN 8273645 INC",
+        "C_OR_D": "S CR",
+        "L/S": "Statement",
+        "ACTION": "MANUAL"
+    },
+    {
+        "ITEM_ID": "TXN004",
+        "COUNTRY": "USA",
+        "AGENT_CODE": "USA002",
+        "LOCAL_ACC_NO": "USA002-ACC01",
+        "VALUE_DATE": "2024-06-04",
+        "AMOUNT": -12000.00,
+        "RELATIONSHIP_ID": "REL002",
+        "SFIELD7": "Refund for invoice 2002",
+        "SFIELD8": "Consulting Fees Reversal",
+        "SFIELD9": "Account Transfer",
+        "REFERENCE": "JPMORGAN 8273645 INC",
+        "C_OR_D": "S DR",
+        "L/S": "Statement",
+        "ACTION": "MANUAL"
+    },
+    {
+        "ITEM_ID": "TXN005",
+        "COUNTRY": "India",
+        "AGENT_CODE": "IND002",
+        "LOCAL_ACC_NO": "IND002-ACC01",
+        "VALUE_DATE": "2024-06-05",
+        "AMOUNT": 7000.00,
+        "RELATIONSHIP_ID": "REL003",
+        "SFIELD7": "Payment for invoice 1002",
+        "SFIELD8": "Service Charge",
+        "SFIELD9": "Account Transfer",
+        "REFERENCE": "HSBC 1234567 LTD",
+        "C_OR_D": "L CR",
+        "L/S": "Ledger",
+        "ACTION": "SYSTEM"
+    },
+    {
+        "ITEM_ID": "TXN006",
+        "COUNTRY": "India",
+        "AGENT_CODE": "IND002",
+        "LOCAL_ACC_NO": "IND002-ACC02",
+        "VALUE_DATE": "2024-06-06",
+        "AMOUNT": -7000.00,
+        "RELATIONSHIP_ID": "REL003",
+        "SFIELD7": "Refund for invoice 1002",
+        "SFIELD8": "Service Charge Reversal",
+        "SFIELD9": "Account Transfer",
+        "REFERENCE": "HSBC 1234567 LTD",
+        "C_OR_D": "L DR",
+        "L/S": "Ledger",
+        "ACTION": "SYSTEM"
+    },
+    {
+        "ITEM_ID": "TXN007",
+        "COUNTRY": "UK",
+        "AGENT_CODE": "UK001",
+        "LOCAL_ACC_NO": "UK001-ACC01",
+        "VALUE_DATE": "2024-06-07",
+        "AMOUNT": 8000.00,
+        "RELATIONSHIP_ID": "REL004",
+        "SFIELD7": "Payment for invoice 3001",
+        "SFIELD8": "Consulting Fees",
+        "SFIELD9": "Account Transfer",
+        "REFERENCE": "HSBC 2345678 LTD",
+        "C_OR_D": "S CR",
+        "L/S": "Statement",
+        "ACTION": "SYSTEM"
+    },
+    {
+        "ITEM_ID": "TXN008",
+        "COUNTRY": "UK",
+        "AGENT_CODE": "UK002",
+        "LOCAL_ACC_NO": "UK002-ACC01",
+        "VALUE_DATE": "2024-06-08",
+        "AMOUNT": -8000.00,
+        "RELATIONSHIP_ID": "REL004",
+        "SFIELD7": "Refund for invoice 3001",
+        "SFIELD8": "Consulting Fees Reversal",
+        "SFIELD9": "Account Transfer",
+        "REFERENCE": "HSBC 2345678 LTD",
+        "C_OR_D": "S DR",
+        "L/S": "Statement",
+        "ACTION": "SYSTEM"
+    },
+    {
+        "ITEM_ID": "TXN009",
+        "COUNTRY": "Australia",
+        "AGENT_CODE": "AUS001",
+        "LOCAL_ACC_NO": "AUS001-ACC01",
+        "VALUE_DATE": "2024-06-09",
+        "AMOUNT": 6000.00,
+        "RELATIONSHIP_ID": "REL005",
+        "SFIELD7": "Payment for invoice 4001",
+        "SFIELD8": "Maintenance Fees",
+        "SFIELD9": "Account Transfer",
+        "REFERENCE": "ANZ 5678910 PTY LTD",
+        "C_OR_D": "L CR",
+        "L/S": "Ledger",
+        "ACTION": "SYSTEM"
+    },
+    {
+        "ITEM_ID": "TXN010",
+        "COUNTRY": "Australia",
+        "AGENT_CODE": "AUS001",
+        "LOCAL_ACC_NO": "AUS001-ACC02",
+        "VALUE_DATE": "2024-06-10",
+        "AMOUNT": -6000.00,
+        "RELATIONSHIP_ID": "REL005",
+        "SFIELD7": "Refund for invoice 4001",
+        "SFIELD8": "Maintenance Fees Reversal",
+        "SFIELD9": "Account Transfer",
+        "REFERENCE": "ANZ 5678910 PTY LTD",
+        "C_OR_D": "L DR",
+        "L/S": "Ledger",
+        "ACTION": "SYSTEM"
+    },
+    {
+        "ITEM_ID": "TXN011",
+        "COUNTRY": "Canada",
+        "AGENT_CODE": "CAN001",
+        "LOCAL_ACC_NO": "CAN001-ACC01",
+        "VALUE_DATE": "2024-06-11",
+        "AMOUNT": 9000.00,
+        "RELATIONSHIP_ID": "REL006",
+        "SFIELD7": "Payment for invoice 5001",
+        "SFIELD8": "Consulting Fees",
+        "SFIELD9": "Account Transfer",
+        "REFERENCE": "RBC 7890123 LTD",
+        "C_OR_D": "S CR",
+        "L/S": "Statement",
+        "ACTION": "SYSTEM"
+    },
+    {
+        "ITEM_ID": "TXN012",
+        "COUNTRY": "Canada",
+        "AGENT_CODE": "CAN002",
+        "LOCAL_ACC_NO": "CAN002-ACC01",
+        "VALUE_DATE": "2024-06-12",
+        "AMOUNT": -9000.00,
+        "RELATIONSHIP_ID": "REL006",
+        "SFIELD7": "Refund for invoice 5001",
+        "SFIELD8": "Consulting Fees Reversal",
+        "SFIELD9": "Account Transfer",
+        "REFERENCE": "RBC 7890123 LTD",
+        "C_OR_D": "S DR",
+        "L/S": "Statement",
+        "ACTION": "SYSTEM"
+    },
+
+    // 3 relationship IDs with 3 transactions each (SYSTEM)
+    {
+        "ITEM_ID": "TXN013",
+        "COUNTRY": "India",
+        "AGENT_CODE": "IND003",
+        "LOCAL_ACC_NO": "IND003-ACC01",
+        "VALUE_DATE": "2024-06-13",
+        "AMOUNT": 4000.00,
+        "RELATIONSHIP_ID": "REL007",
+        "SFIELD7": "Payment for invoice 6001",
+        "SFIELD8": "Service Charge",
+        "SFIELD9": "Account Transfer",
+        "REFERENCE": "ICICI 9876543 PVT LTD",
+        "C_OR_D": "L CR",
+        "L/S": "Ledger",
+        "ACTION": "SYSTEM"
+    },
+    {
+        "ITEM_ID": "TXN014",
+        "COUNTRY": "India",
+        "AGENT_CODE": "IND003",
+        "LOCAL_ACC_NO": "IND003-ACC02",
+        "VALUE_DATE": "2024-06-14",
+        "AMOUNT": -2000.00,
+        "RELATIONSHIP_ID": "REL007",
+        "SFIELD7": "Refund for invoice 6001",
+        "SFIELD8": "Service Charge Reversal",
+        "SFIELD9": "Account Transfer",
+        "REFERENCE": "ICICI 9876543 PVT LTD",
+        "C_OR_D": "L DR",
+        "L/S": "Ledger",
+        "ACTION": "SYSTEM"
+    },
+    {
+        "ITEM_ID": "TXN015",
+        "COUNTRY": "India",
+        "AGENT_CODE": "IND003",
+        "LOCAL_ACC_NO": "IND003-ACC03",
+        "VALUE_DATE": "2024-06-15",
+        "AMOUNT": -2000.00,
+        "RELATIONSHIP_ID": "REL007",
+        "SFIELD7": "Refund for invoice 6001",
+        "SFIELD8": "Service Charge Reversal",
+        "SFIELD9": "Account Transfer",
+        "REFERENCE": "ICICI 9876543 PVT LTD",
+        "C_OR_D": "L DR",
+        "L/S": "Ledger",
+        "ACTION": "SYSTEM"
+    },
+    {
+        "ITEM_ID": "TXN016",
+        "COUNTRY": "USA",
+        "AGENT_CODE": "USA003",
+        "LOCAL_ACC_NO": "USA003-ACC01",
+        "VALUE_DATE": "2024-06-16",
+        "AMOUNT": 3000.00,
+        "RELATIONSHIP_ID": "REL008",
+        "SFIELD7": "Payment for invoice 7001",
+        "SFIELD8": "Consulting Fees",
+        "SFIELD9": "Account Transfer",
+        "REFERENCE": "WELLS FARGO 1111111 INC",
+        "C_OR_D": "S CR",
+        "L/S": "Statement",
+        "ACTION": "SYSTEM"
+    },
+    {
+        "ITEM_ID": "TXN017",
+        "COUNTRY": "USA",
+        "AGENT_CODE": "USA003",
+        "LOCAL_ACC_NO": "USA003-ACC02",
+        "VALUE_DATE": "2024-06-17",
+        "AMOUNT": -1500.00,
+        "RELATIONSHIP_ID": "REL008",
+        "SFIELD7": "Refund for invoice 7001",
+        "SFIELD8": "Consulting Fees Reversal",
+        "SFIELD9": "Account Transfer",
+        "REFERENCE": "WELLS FARGO 1111111 INC",
+        "C_OR_D": "S DR",
+        "L/S": "Statement",
+        "ACTION": "SYSTEM"
+    },
+    {
+        "ITEM_ID": "TXN018",
+        "COUNTRY": "USA",
+        "AGENT_CODE": "USA003",
+        "LOCAL_ACC_NO": "USA003-ACC03",
+        "VALUE_DATE": "2024-06-18",
+        "AMOUNT": -1500.00,
+        "RELATIONSHIP_ID": "REL008",
+        "SFIELD7": "Refund for invoice 7001",
+        "SFIELD8": "Consulting Fees Reversal",
+        "SFIELD9": "Account Transfer",
+        "REFERENCE": "WELLS FARGO 1111111 INC",
+        "C_OR_D": "S DR",
+        "L/S": "Statement",
+        "ACTION": "SYSTEM"
+    },
+    {
+        "ITEM_ID": "TXN019",
+        "COUNTRY": "UK",
+        "AGENT_CODE": "UK003",
+        "LOCAL_ACC_NO": "UK003-ACC01",
+        "VALUE_DATE": "2024-06-19",
+        "AMOUNT": 2000.00,
+        "RELATIONSHIP_ID": "REL009",
+        "SFIELD7": "Payment for invoice 8001",
+        "SFIELD8": "Service Charge",
+        "SFIELD9": "Account Transfer",
+        "REFERENCE": "BARCLAYS 2222222 LTD",
+        "C_OR_D": "L CR",
+        "L/S": "Ledger",
+        "ACTION": "SYSTEM"
+    },
+    {
+        "ITEM_ID": "TXN020",
+        "COUNTRY": "UK",
+        "AGENT_CODE": "UK003",
+        "LOCAL_ACC_NO": "UK003-ACC02",
+        "VALUE_DATE": "2024-06-20",
+        "AMOUNT": -1000.00,
+        "RELATIONSHIP_ID": "REL009",
+        "SFIELD7": "Refund for invoice 8001",
+        "SFIELD8": "Service Charge Reversal",
+        "SFIELD9": "Account Transfer",
+        "REFERENCE": "BARCLAYS 2222222 LTD",
+        "C_OR_D": "L DR",
+        "L/S": "Ledger",
+        "ACTION": "SYSTEM"
+    },
+    {
+        "ITEM_ID": "TXN021",
+        "COUNTRY": "UK",
+        "AGENT_CODE": "UK003",
+        "LOCAL_ACC_NO": "UK003-ACC03",
+        "VALUE_DATE": "2024-06-21",
+        "AMOUNT": -1000.00,
+        "RELATIONSHIP_ID": "REL009",
+        "SFIELD7": "Refund for invoice 8001",
+        "SFIELD8": "Service Charge Reversal",
+        "SFIELD9": "Account Transfer",
+        "REFERENCE": "BARCLAYS 2222222 LTD",
+        "C_OR_D": "L DR",
+        "L/S": "Ledger",
+        "ACTION": "SYSTEM"
+    },
+
+    // 1 relationship ID with 5 transactions (SYSTEM)
+    {
+        "ITEM_ID": "TXN022",
+        "COUNTRY": "Germany",
+        "AGENT_CODE": "GER001",
+        "LOCAL_ACC_NO": "GER001-ACC01",
+        "VALUE_DATE": "2024-06-22",
+        "AMOUNT": 15000.00,
+        "RELATIONSHIP_ID": "REL010",
+        "SFIELD7": "Payment for invoice 9001",
+        "SFIELD8": "Consulting Fees",
+        "SFIELD9": "Account Transfer",
+        "REFERENCE": "DEUTSCHE BANK 3333333 AG",
+        "C_OR_D": "S CR",
+        "L/S": "Statement",
+        "ACTION": "SYSTEM"
+    },
+    {
+        "ITEM_ID": "TXN023",
+        "COUNTRY": "Germany",
+        "AGENT_CODE": "GER001",
+        "LOCAL_ACC_NO": "GER001-ACC02",
+        "VALUE_DATE": "2024-06-23",
+        "AMOUNT": -5000.00,
+        "RELATIONSHIP_ID": "REL010",
+        "SFIELD7": "Refund for invoice 9001",
+        "SFIELD8": "Consulting Fees Reversal",
+        "SFIELD9": "Account Transfer",
+        "REFERENCE": "DEUTSCHE BANK 3333333 AG",
+        "C_OR_D": "S DR",
+        "L/S": "Statement",
+        "ACTION": "SYSTEM"
+    },
+    {
+        "ITEM_ID": "TXN024",
+        "COUNTRY": "Germany",
+        "AGENT_CODE": "GER001",
+        "LOCAL_ACC_NO": "GER001-ACC03",
+        "VALUE_DATE": "2024-06-24",
+        "AMOUNT": -5000.00,
+        "RELATIONSHIP_ID": "REL010",
+        "SFIELD7": "Refund for invoice 9001",
+        "SFIELD8": "Consulting Fees Reversal",
+        "SFIELD9": "Account Transfer",
+        "REFERENCE": "DEUTSCHE BANK 3333333 AG",
+        "C_OR_D": "S DR",
+        "L/S": "Statement",
+        "ACTION": "SYSTEM"
+    },
+    {
+        "ITEM_ID": "TXN025",
+        "COUNTRY": "Germany",
+        "AGENT_CODE": "GER001",
+        "LOCAL_ACC_NO": "GER001-ACC04",
+        "VALUE_DATE": "2024-06-25",
+        "AMOUNT": -3000.00,
+        "RELATIONSHIP_ID": "REL010",
+        "SFIELD7": "Refund for invoice 9001",
+        "SFIELD8": "Consulting Fees Reversal",
+        "SFIELD9": "Account Transfer",
+        "REFERENCE": "DEUTSCHE BANK 3333333 AG",
+        "C_OR_D": "S DR",
+        "L/S": "Statement",
+        "ACTION": "SYSTEM"
+    },
+    {
+        "ITEM_ID": "TXN026",
+        "COUNTRY": "Germany",
+        "AGENT_CODE": "GER001",
+        "LOCAL_ACC_NO": "GER001-ACC05",
+        "VALUE_DATE": "2024-06-26",
+        "AMOUNT": -2000.00,
+        "RELATIONSHIP_ID": "REL010",
+        "SFIELD7": "Refund for invoice 9001",
+        "SFIELD8": "Consulting Fees Reversal",
+        "SFIELD9": "Account Transfer",
+        "REFERENCE": "DEUTSCHE BANK 3333333 AG",
+        "C_OR_D": "S DR",
+        "L/S": "Statement",
+        "ACTION": "SYSTEM"
+    }
+]
+Explanation
+6 Relationship IDs with 2 Transactions Each:
+
+REL001 to REL006
+4 SYSTEM matched, 2 MANUAL matched
+3 Relationship IDs with 3 Transactions Each:
+
+REL007 to REL009
+All SYSTEM matched
+1 Relationship ID with 5 Transactions:
+
+REL010
+SYSTEM matched
+Each transaction in a group sums to a net amount of zero, maintaining the reconciliation requirement. This data set provides a diverse collection of transactions spanning multiple countries and accounting for different types of entries (ledger and statement) as well as different matching types (SYSTEM and MANUAL).

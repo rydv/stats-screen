@@ -1,0 +1,9 @@
+rule_id,category_code,set_id,or_and_flag,value_date_flag,amount_flag,ls_flag,dc_flag,ref1,ref2,ref3,ref4
+1,CAT001,SET1,OR,N,N,L,D,|ID|101|EXACT|FX|EXP|\d{9},,,
+1,CAT001,SET1,OR,N,N,S,C,|ID|102|EXACT|MX|EXP|\d{9},,,
+2,CAT002,SET2,AND,Y,N,L,D,|ID|201|EXACT|VD|EXP|(\d{2}-\d{2}-\d{4})|DT_FRMT|DD-MM-YYYY,,,
+2,CAT002,SET2,AND,Y,N,S,C,|ID|202|EXACT|VD|EXP|(\d{2}-\d{2}-\d{4})|DT_FRMT|DD-MM-YYYY,,,
+3,CAT003,SET3,OR,N,Y,L,D,|ID|301|PerfRef|RL|5-15,,,
+3,CAT003,SET3,OR,N,Y,S,C,|ID|302|PerfRef|RL|5-15,,,
+4,CAT004,SET4,AND,N,N,L,D,|ID|401|EXACT|OP|EXP|(\d+:\d+)|OP|REP|:||,,,
+4,CAT004,SET4,AND,N,N,S,C,|ID|402|EXACT|OP|EXP|(\d+:\d+)|OP|REP|:||,,,
