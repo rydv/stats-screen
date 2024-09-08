@@ -1,0 +1,58 @@
+Documentation for process.py:
+
+Purpose: The process.py script is the main entry point for processing rule sheets and finding matches based on various rule types.
+
+Key Components:
+
+RuleParams (from rule_params.py): Defines the structure for rule parameters.
+Field (from field.py): Represents individual fields in the rule sheet.
+BaseRule (from base_rule.py): Abstract base class for all rule types.
+ExpRule (from expression_rule.py): Handles expression-based rules.
+PerfRefRule (from perf_ref_rule.py): Handles perfect reference rules.
+ValdtRule (from value_date_rule.py): Handles value date rules.
+Main Function: process_rules(file)
+
+Input:
+
+file: A dictionary containing file metadata, including the uploaded file name.
+Process: a. File Handling:
+
+Constructs the file path using the uploaded file name.
+Reads the CSV file into a pandas DataFrame.
+b. Rule Parsing:
+
+Iterates through each row in the DataFrame.
+For each row, creates a RuleParams object with rule metadata.
+Creates Field objects for each reference field in the row.
+c. Rule Type Identification:
+
+Determines the rule type based on the fields' flags (perf_ref_flag, valdt_flag, op_flag).
+Creates the appropriate Rule object (PerfRefRule, ValdtRule, or ExpRule) based on the identified type.
+d. Rule Processing:
+
+Calls the find_matches() method on each Rule object.
+Collects the results in a list of DataFrames.
+e. Result Aggregation:
+
+Concatenates all result DataFrames.
+Performs final processing (sorting, deduplication).
+Generates a summary of matches for each rule.
+Output:
+
+A dictionary containing:
+status: Boolean indicating success or failure.
+output: Contains the matches DataFrame and run summary.
+error_details: Any error information if the process failed.
+Helper Functions:
+
+validate_rule(rule): Validates individual rules.
+identify_rule_type(fields): Determines the rule type based on field flags.
+valdt_type_check(fields): Checks if any field has a value date flag.
+operation_type_check(fields): Checks if any field has an operation flag.
+Flow:
+
+The script reads the input CSV file.
+For each row, it creates Rule objects based on the rule type.
+It processes each rule to find matches.
+Finally, it aggregates all matches and generates a summary report.
+This documentation provides a comprehensive overview of the process.py script, detailing its purpose, components, main function, helper functions, and overall flow in the context of the rule processing system.

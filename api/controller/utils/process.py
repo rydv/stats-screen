@@ -81,9 +81,9 @@ def process_rules(file):
             rule_type = identify_rule_type(fields)
             if rule_type == 'perfect_ref':
                 current_rule = PerfRefRule(rule_params, l_s, d_c, fields)
-            elif valdt_type_check(fields):
+            elif rule_type == 'value_date':
                 current_rule = ValdtRule(rule_params, l_s, d_c, fields)
-            elif operation_type_check(fields):
+            elif rule_type == 'operation':
                 current_rule = ValdtRule(rule_params, l_s, d_c, fields)
             else:
                 current_rule = ExpRule(rule_params, l_s, d_c, fields)
