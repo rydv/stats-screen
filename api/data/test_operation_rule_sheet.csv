@@ -1,0 +1,3 @@
+unique_rule_id,category_code,set_id,or_and_flag,value_date_flag,amount_flag,ls_flag,dc_flag,ref1,ref2,ref3,ref4
+SG\2021\NOS\MAT-0024,SINGAPORE,ALL,AND,No,Same,L,A,,,|EXACT|AT WDR AT 2164 MDS|EXP|(\d{2}:\d{2}:\d{2})|OP|REP|:||,
+SG\2021\NOS\MAT-0024,SINGAPORE,ALL,AND,No,Same,L,A,,,|EXP|(\d{6}),

@@ -1,0 +1,3 @@
+unique_rule_id,category_code,set_id,or_and_flag,value_date_flag,amount_flag,ls_flag,dc_flag,ref1,ref2,ref3,ref4
+SG\2021\NOS\MAT-0034,SINGAPORE,ALL,AND,No,Same,L,A,|ID|123|PerfRef|RL|5-10,,,
+SG\2021\NOS\MAT-0034,SINGAPORE,ALL,AND,No,Same,S,A,,,|ID|123|PerfRef|RL|5-10,
