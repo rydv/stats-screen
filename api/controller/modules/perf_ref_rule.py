@@ -39,12 +39,18 @@ class Rule(BaseRule):
 
         return True
 
-    def _find_top_5_common_substrings(self, str1: str, str2: str):
-        matcher = SequenceMatcher(None, str1, str2)
-        match_blocks = matcher.get_matching_blocks()
-        substrings = [str1[block.a:block.a + block.size] for block in match_blocks if block.size >= 5]
-        substrings = [s for s in substrings if '|' not in s]
-        return sorted(substrings, key=len, reverse=True)[:5]
+    def _find_top_5_common_substrings(self, strings):
+        if not strings:
+            return []
+
+        common_substrings = set(self._get_substrings(strings[0]))
+        for s in strings[1:]:
+            common_substrings &= set(self._get_substrings(s))
+
+        return sorted(list(common_substrings), key=len, reverse=True)[:5]
+
+    def _get_substrings(self, s):
+        return [s[i:j] for i in range(len(s)) for j in range(i + 5, len(s) + 1) if '|' not in s[i:j]]
 
     def _preprocess_string(self, s: str):
         return re.sub(r'[^\w\s]', '', s.strip())
@@ -59,6 +65,8 @@ class Rule(BaseRule):
         filter1_tran_type = get_tran_type(self.filter1_params)
         filter2_tran_type = get_tran_type(self.filter2_params)
 
+        matches = {}
+
         for field_id, field_info in self.filter_mapping.items():
             filter1_values = ['|'.join(self._preprocess_string(transaction.get(field, '')) 
                             for field in field_info['filter1_fields'])
@@ -70,14 +78,12 @@ class Rule(BaseRule):
                             for transaction in relationship_group 
                             if transaction['C_OR_D'] in filter2_tran_type]
 
-            common_substrings = set(self._find_top_5_common_substrings(filter1_values[0], filter2_values[0]))
-            for val1 in filter1_values[1:]:
-                for val2 in filter2_values[1:]:
-                    common_substrings &= set(self._find_top_5_common_substrings(val1, val2))
+            common_substrings = self._find_top_5_common_substrings(filter1_values + filter2_values)
 
-            self.filter_mapping[field_id]['matches'] = list(common_substrings)
+            if common_substrings:
+                matches[field_id] = common_substrings
 
-        return any(len(field_info.get('matches', [])) > 0 for field_info in self.filter_mapping.values())
+        return matches
 
     def _group_by_trans_by_rel(self, transactions):
         grouped_transactions = defaultdict(list)
@@ -118,9 +124,8 @@ class Rule(BaseRule):
                 if matches:
                     for transaction in relationship_group:
                         transaction['MATCHED_VALUE'] = ', '.join([
-                            f"{filter_id}: {', '.join(filter_info['matches'])}"
-                            for filter_id, filter_info in self.filter_mapping.items()
-                            if filter_info['matches']
+                            f"{field_id}: {', '.join(common_substrings)}"
+                            for field_id, common_substrings in matches.items()
                         ])
                     matched_transactions.extend(relationship_group)
 
