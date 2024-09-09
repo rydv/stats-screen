@@ -54,8 +54,9 @@ Documentation for perf_ref_rule.py:
 
         After capture this information, we will validate if at least one field is present in values of filter1/2_fields
 
-Transactions are fetched using scroll in elastic and grouped by relationship.
-        On each batch of data,
+    Matching Logic
+        - Transactions are fetched using scroll in elastic and grouped by relationship id.
+        - On each batch of data,
         - Transactions are grouped by relationship id.
             - Based on each relationship group, we apply the filter logic provided in the rule Fields.
             - The filter logic details are below:   

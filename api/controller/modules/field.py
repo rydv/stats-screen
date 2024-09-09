@@ -118,10 +118,24 @@ class OpStrategy(ExpressionStrategy):
 
 class PerfRefStrategy(ExpressionStrategy):
     def parse(self, content: str):
-        perf_ref_match = re.search(r'RL\|(\d+)-(\d+)', content)
+        perf_ref_match = re.search(r'RL\|([0-9-]+)', content)
+        result = {
+            'min_length': None,
+            'max_length': None,
+            'exact_length': None
+        }
+        
         if perf_ref_match:
-            return {
-                'min_length': int(perf_ref_match.group(1)),
-                'max_length': int(perf_ref_match.group(2))
-            }
-        return {}
+            rl_value = perf_ref_match.group(1)
+            if '-' in rl_value:
+                min_max = rl_value.split('-')
+                if min_max[0]:
+                    result['min_length'] = int(min_max[0])
+                if min_max[1]:
+                    result['max_length'] = int(min_max[1])
+            elif rl_value:
+                result['exact_length'] = int(rl_value)
+        else:
+            result['min_length'] = 5
+        
+        return result
