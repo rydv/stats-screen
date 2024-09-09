@@ -39,18 +39,25 @@ class Rule(BaseRule):
 
         return True
 
-    def _find_top_5_common_substrings(self, strings):
+    def _find_top_5_common_substrings(self, strings, params):
         if not strings:
             return []
 
-        common_substrings = set(self._get_substrings(strings[0]))
+        common_substrings = set(self._get_substrings(strings[0], params))
         for s in strings[1:]:
-            common_substrings &= set(self._get_substrings(s))
+            common_substrings &= set(self._get_substrings(s, params))
 
         return sorted(list(common_substrings), key=len, reverse=True)[:5]
 
-    def _get_substrings(self, s):
-        return [s[i:j] for i in range(len(s)) for j in range(i + 5, len(s) + 1) if '|' not in s[i:j]]
+    def _get_substrings(self, s, params):
+        min_len = params.get('min_length', 5)
+        max_len = params.get('max_length', 15)
+        exact_len = params.get('exact_length')
+
+        if exact_len:
+            return [s[i:i+exact_len] for i in range(len(s)-exact_len+1) if '|' not in s[i:i+exact_len]]
+        else:
+            return [s[i:j] for i in range(len(s)) for j in range(i + min_len, min(i + max_len + 1, len(s) + 1)) if '|' not in s[i:j]]
 
     def _preprocess_string(self, s: str):
         return re.sub(r'[^\w\s]', '', s.strip())
@@ -78,7 +85,7 @@ class Rule(BaseRule):
                             for transaction in relationship_group 
                             if transaction['C_OR_D'] in filter2_tran_type]
 
-            common_substrings = self._find_top_5_common_substrings(filter1_values + filter2_values)
+            common_substrings = self._find_top_5_common_substrings([filter1_values + filter2_values], field_info['params'])
 
             if common_substrings:
                 matches[field_id] = common_substrings
