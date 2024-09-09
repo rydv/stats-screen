@@ -16,6 +16,7 @@ class BaseRule(ABC):
             'fields': fields
         }
         self.filter2 = {}
+        self.filter_mapping={}
         self._update_parsing_info('filter1', fields)
 
     def add_filter2(self, l_s: str, d_c: str, fields: List[Field]):

@@ -1,0 +1,132 @@
+Documentation for perf_ref_rule.py:
+
+    Logic Flow:
+
+        #Entry point for every rule through api/controller/utils/process.py
+        CSV file is read and data is loaded into memory.
+        Common rule parameters are initialized from usnig common fields(structured is defined in @rule_params.py).
+        Field values are parsed using the Field class from api/controller/modules/field.py:
+            - Field objects are created for each column in the CSV.
+            - The _extract_id method is called to extract any ID information.
+            - The _parse_value method is called to process the field value:
+                - It splits the value based on identifiers (|EXACT|, |EXP|, |FRMT|, |OP|, |PerfRef|).
+                - For each identifier, the appropriate strategy is used to parse the content.
+                - Flags (exp_flag, valdt_flag, op_flag, perf_ref_flag) are set based on the identifiers found.
+                - Parsed values and parameters are stored in the Field object.
+            - The _create_search_agg_exp method is called to create a search pattern if needed.
+        Rules are identified based on the parsed field values and flags.
+        Respective rule parameters are captured and stored for each identified rule.
+        The rule type is identified using the identify_rule_type function, which checks the flags set in each Field object of the reference fields.
+        Based on the identified rule type, the appropriate rule class (PerfRefRule, ValdtRule, or ExpRule) is instantiated with the rule parameters, l_s, d_c, and fields.
+        The rule object is initialized with these parameters, setting up the necessary attributes and data structures for further processing.
+        Rule is validated using the valid_rule method. Criteria for validating rule is provided below.
+        The find_matches method is called on the initialized rule object to process the rule and find matching records.
+
+    Validating Perfect Reference Rule Criteria:
+    
+        Refer below input for perf ref rule type
+        unique_rule_id,category_code,set_id,or_and_flag,value_date_flag,amount_flag,ls_flag,dc_flag,ref1,ref2,ref3,ref4
+        SG\2021\NOS\MAT-0034,SINGAPORE,ALL,AND,No,Same,L,A,|ID|123|PerfRef|RL|5-10,,,
+        SG\2021\NOS\MAT-0034,SINGAPORE,ALL,AND,No,Same,S,A,,,|ID|123|PerfRef|RL|5-10,
+
+        As per the logic explained in process_logic.txt, perf ref rule(perf_ref_rule.py) instance will be initiated. 
+
+        Now lets discuss the processing logic for perf ref instance, but before starting processing lets discuss about validate_rule function in its class
+        after below lines in process.py 
+
+        if current_rule and current_rule.rule_params.unique_rule_id == rule_params.unique_rule_id:
+            current_rule.add_filter2(l_s, d_c, fields)
+
+        Lets call 
+        current_rule.validate_rule(), which will validate whether the filtering requirement in ref fields is mapped properly, for example, in the sample rule data attached,
+            |ID|123|PerfRef|RL|5-10 in ref1 of filter-1(leg-1)
+            |ID|123|PerfRef|RL|5-10 in ref3 of filter-2(leg-2)
+
+        We need to iterate through fields of the both filters filter1_params & filter2_params as defined in base_rule.py 
+        While validating we will capture the filter criteria in a structured format in some self rule attribute, which we can use later while processing relationship group
+
+        We can capture information like
+
+        {
+            <ID>: {'filter1_fields': [ref1], 'filter2_fields': [ref2]} #if field.id is provided 
+            none: {'filter1_fields': [ref1], 'filter2_fields': [ref2]} #if field.id is none
+        }
+
+        After capture this information, we will validate if at least one field is present in values of filter1/2_fields
+
+Transactions are fetched using scroll in elastic and grouped by relationship.
+        On each batch of data,
+        - Transactions are grouped by relationship id.
+            - Based on each relationship group, we apply the filter logic provided in the rule Fields.
+            - The filter logic details are below:   
+
+
+
+
+    
+
+
+
+        Matching groups are marked and collected.
+        Final processing includes amount flag filtering and adding the Rule_Id.
+
+    Input Processing:
+
+        The rule sheet (test_perf_ref_rule_sheet.csv) provides the PerfRef parameters.
+        Fields are parsed to extract PerfRef-specific information (min_length, max_length).
+
+    Output:
+
+        A DataFrame containing matched transactions, including:
+            Original transaction details
+            MATCHED_VALUE column with common substrings
+            Rule_Id for traceability
+
+    #CODE LOGIC
+    Class Structure:
+
+        The Rule class inherits from BaseRule.
+        It initializes with rule_params, l_s, d_c, and fields.
+
+    Key Methods:
+
+        a. valid_rule_scenario():
+
+            Validates if the rule has the required filter values for PerfRef processing.
+            Checks for 'PerfectReference' in both filter1 and filter2 parsing info.
+
+        b. _find_top_5_common_substrings(ref1, ref3):
+
+            Uses SequenceMatcher to find common substrings between two references.
+            Returns the top 5 longest common substrings.
+
+        c. _validate_and_mark(txn_group, min_len=5, max_len=15):
+
+            Validates transaction groups based on common substrings.
+            Extracts REFERENCE fields from two transactions.
+            Finds and filters common substrings based on length criteria.
+
+        d. _group_by_trans_by_rel(transactions):
+
+            Groups transactions by RELATIONSHIP_ID.
+
+        e. _scroll_transactions(query, scroll_id):
+
+            Fetches transactions using Elasticsearch scroll API.
+
+        f. _filter_query_formatter():
+
+            Formats the Elasticsearch query for PerfRef rules.
+            Includes filters for country, local account number, and transaction types.
+
+        g. find_matches():
+
+            Main method to find matching transactions.
+            Uses scrolling to fetch all relevant transactions.
+            Groups transactions by relationship.
+            Validates and marks matching groups.
+            Applies amount flag filter if specified.
+            Returns a DataFrame of matched transactions.
+
+
+    This documentation outlines the structure, key methods, logic flow, input processing, and output of the Perfect Reference rule implementation in perf_ref_rule.py.

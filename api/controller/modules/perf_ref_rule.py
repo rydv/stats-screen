@@ -14,12 +14,26 @@ class Rule(BaseRule):
     def __init__(self, rule_params: RuleParams, l_s: str, d_c: str, fields: List[Field]):
         super().__init__(rule_params, l_s, d_c, fields)
 
-    def valid_rule_scenario(self):
-        """Validate that the rule has the required filter values set for PerfRef processing."""
-        if not self.filter1 or not self.filter2:
-            return False
-        # Check if the necessary fields for PerfRef are present
-        return 'PerfectReference' in self.parsing_info['filter1'] and 'PerfectReference' in self.parsing_info['filter2']
+    def _process_fields(self, fields, filter_key):
+        for field in fields:
+            if field.perf_ref_flag:
+                field_id = field.id if field.id else 'none'
+                if field_id not in self.filter_mapping:
+                    self.filter_mapping[field_id] = {'filter1_fields': [], 'filter2_fields': []}
+                self.filter_mapping[field_id][f'{filter_key}_fields'].append(field.name)
+
+    def validate_rule(self):
+        self._process_fields(self.filter1_params['fields'], 'filter1')
+        self._process_fields(self.filter2_params['fields'], 'filter2')
+
+        if not self.filter_mapping:
+            raise ValueError("No PerfRef fields found in either filter")
+
+        for field_info in self.filter_mapping.values():
+            if not field_info['filter1_fields'] or not field_info['filter2_fields']:
+                raise ValueError("PerfRef fields must be present in both filters")
+
+        return True
 
     def _find_top_5_common_substrings(self, ref1: str, ref3: str):
         """Find the top 5 longest common substrings between ref1 and ref3."""
