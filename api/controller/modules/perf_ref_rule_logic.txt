@@ -48,20 +48,26 @@ Documentation for perf_ref_rule.py:
         We can capture information like
 
         {
-            <ID>: {'filter1_fields': [ref1], 'filter2_fields': [ref2]} #if field.id is provided 
-            none: {'filter1_fields': [ref1], 'filter2_fields': [ref2]} #if field.id is none
+            <ID>: {'filter1_fields': [ref1], 'filter2_fields': [ref2]}, 'params': { ... } #if field.id is provided 
+            none: {'filter1_fields': [ref1], 'filter2_fields': [ref2]}, 'params': { ... }#if field.id is none
         }
 
         After capture this information, we will validate if at least one field is present in values of filter1/2_fields
 
     Matching Logic
         - Transactions are fetched using scroll in elastic and grouped by relationship id.
-        - On each batch of data,
-        - Transactions are grouped by relationship id.
-            - Based on each relationship group, we apply the filter logic provided in the rule Fields.
-            - The filter logic details are below:   
-
-
+        - On each batch of data, Transactions are grouped by relationship id.
+            - On each relationship group, we will apply perf ref filtering rules to see if they match.\
+            - How logic should work:
+                - We got our self.filter_mapping, which holds the filter criteria for each filter
+                - We will iterate through each rule id in the self.filter_mapping
+        {
+            <ID>: {'filter1_fields': [ref1], 'filter2_fields': [ref2]}, 'params': { ... } #if field.id is provided 
+            none: {'filter1_fields': [ref1], 'filter2_fields': [ref2]}, 'params': { ... }#if field.id is none
+        }
+        - We will take filter1_fields, take their values from the leg-1(we will strip white space, any special chars & symbols), concat them with '|'. Same for filter2_fields.
+        - Then we will look for top 5 common substrings in the concatenated string. We wouldn't consider matches containing '|'. Assign matches to new 'matches' key in self.filter_mapping in its associated rule id.
+        - This way we will get matches for all the filter ids in the self.filter_mapping.
 
 
     

@@ -19,7 +19,11 @@ class Rule(BaseRule):
             if field.perf_ref_flag:
                 field_id = field.id if field.id else 'none'
                 if field_id not in self.filter_mapping:
-                    self.filter_mapping[field_id] = {'filter1_fields': [], 'filter2_fields': []}
+                    self.filter_mapping[field_id] = {
+                        'filter1_fields': [],
+                        'filter2_fields': [],
+                        'params': field.perf_ref_params
+                    }
                 self.filter_mapping[field_id][f'{filter_key}_fields'].append(field.name)
 
     def validate_rule(self):
@@ -35,36 +39,47 @@ class Rule(BaseRule):
 
         return True
 
-    def _find_top_5_common_substrings(self, ref1: str, ref3: str):
-        """Find the top 5 longest common substrings between ref1 and ref3."""
-        match = SequenceMatcher(None, ref1, ref3).get_matching_blocks()
-        substrings = sorted([ref1[m.a:m.a+m.size] for m in match if m.size >= 5], key=len, reverse=True)
-        return substrings[:5]  # Return top 5 longest substrings
+    def _find_top_5_common_substrings(self, str1: str, str2: str):
+        matcher = SequenceMatcher(None, str1, str2)
+        match_blocks = matcher.get_matching_blocks()
+        substrings = [str1[block.a:block.a + block.size] for block in match_blocks if block.size >= 5]
+        substrings = [s for s in substrings if '|' not in s]
+        return sorted(substrings, key=len, reverse=True)[:5]
 
-    def _validate_and_mark(self, txn_group, min_len=5, max_len=15):
-        """Validate and mark relationship groups based on common substrings."""
-        if len(txn_group) != 2:
-            return False, []  # Only consider groups with exactly two transactions
+    def _preprocess_string(self, s: str):
+        return re.sub(r'[^\w\s]', '', s.strip())
 
-        # Extract the REFERENCE field from both transactions
-        ref1 = txn_group[0].get('REFERENCE', '')
-        ref3 = txn_group[1].get('REFERENCE', '')
+    def _process_relationship_group(self, relationship_group):
+        def get_tran_type(filter_params):
+            if filter_params['d_c'] != 'A':
+                return [f"{filter_params['l_s']} {filter_params['d_c']}R"]
+            else:
+                return [f"{filter_params['l_s']} CR", f"{filter_params['l_s']} DR"]
 
-        # Ensure both references are provided and non-empty
-        if not ref1 or not ref3:
-            return False, []
+        filter1_tran_type = get_tran_type(self.filter1_params)
+        filter2_tran_type = get_tran_type(self.filter2_params)
 
-        # Find common substrings between the two references
-        common_substrings = self._find_top_5_common_substrings(ref1, ref3)
+        for field_id, field_info in self.filter_mapping.items():
+            filter1_values = ['|'.join(self._preprocess_string(transaction.get(field, '')) 
+                            for field in field_info['filter1_fields'])
+                            for transaction in relationship_group 
+                            if transaction['C_OR_D'] in filter1_tran_type]
+            
+            filter2_values = ['|'.join(self._preprocess_string(transaction.get(field, '')) 
+                            for field in field_info['filter2_fields'])
+                            for transaction in relationship_group 
+                            if transaction['C_OR_D'] in filter2_tran_type]
 
-        # Filter substrings based on the length criteria
-        valid_substrings = [substring for substring in common_substrings if min_len <= len(substring) <= max_len]
+            common_substrings = set(self._find_top_5_common_substrings(filter1_values[0], filter2_values[0]))
+            for val1 in filter1_values[1:]:
+                for val2 in filter2_values[1:]:
+                    common_substrings &= set(self._find_top_5_common_substrings(val1, val2))
 
-        # Return True if any valid substrings exist, along with the list of valid substrings
-        return bool(valid_substrings), valid_substrings
+            self.filter_mapping[field_id]['matches'] = list(common_substrings)
+
+        return any(len(field_info.get('matches', [])) > 0 for field_info in self.filter_mapping.values())
 
     def _group_by_trans_by_rel(self, transactions):
-        """Group transactions by RELATIONSHIP_ID."""
         grouped_transactions = defaultdict(list)
         for txn in transactions:
             relationship_id = txn['RELATIONSHIP_ID']
@@ -98,27 +113,71 @@ class Rule(BaseRule):
 
             grouped_transactions = self._group_by_trans_by_rel(transactions)
 
-            # Process each group
-            for relationship_id, txn_group in grouped_transactions.items():
-                is_matched, matched_substrings = self._validate_and_mark(txn_group)
-                if is_matched:
-                    txn_group_df = pd.DataFrame(txn_group)
-                    txn_group_df['MATCHED_VALUE'] = ', '.join(matched_substrings)
-                    matched_transactions.append(txn_group_df)
+            for relationship_id, relationship_group in grouped_transactions.items():
+                matches = self._process_relationship_group(relationship_group)
+                if matches:
+                    for transaction in relationship_group:
+                        transaction['MATCHED_VALUE'] = ', '.join([
+                            f"{filter_id}: {', '.join(filter_info['matches'])}"
+                            for filter_id, filter_info in self.filter_mapping.items()
+                            if filter_info['matches']
+                        ])
+                    matched_transactions.extend(relationship_group)
 
-        # Concatenate all DataFrames in the list into a single DataFrame
         if matched_transactions:
-            final_df = pd.concat(matched_transactions, ignore_index=True)
-
-            # Apply amount flag filter if self.amount_flag is set
+            final_df = pd.DataFrame(matched_transactions)
             if self.rule_params.amount:
                 final_df = final_df.groupby('RELATIONSHIP_ID').filter(
                     lambda group: self.check_amount_flag_condition('AMOUNT', self.rule_params.amount, group)
                 )
-
-            # Reset index
-            final_df.reset_index(drop=True, inplace=True)
             final_df['Rule_Id'] = self.rule_params.unique_rule_id
             return final_df
 
-        return pd.DataFrame()  # Return an empty DataFrame if no matches found
+        return pd.DataFrame()
+
+    def _filter_query_formatter(self):
+        try:
+            print('---')
+            print(f'Formatting query for PerfRef rule')
+            rule_params = self.rule_params
+            query = {
+                "query": {
+                    "bool": {
+                        "filter": []
+                    }
+                }
+            }
+            conditions = {
+                "bool": {
+                    "must": [
+                        {"term": {
+                            "COUNTRY": rule_params.category_code
+                        }}
+                    ],
+                    "should": [],
+                    "minimum_should_match": 1
+                }
+            }
+
+            set_ids = rule_params.set_id
+            if set_ids != 'ALL':
+                condition = {"terms": {"LOCAL_ACC_NO": set_ids}}
+                conditions["bool"]["must"].append(condition)
+
+            tran_type = [f"{self.filter1_params['l_s']} CR", f"{self.filter1_params['l_s']} DR"]
+            print(f'Trans Type: {tran_type}')
+            condition = {"terms": {"C_OR_D": tran_type}}
+            conditions["bool"]["must"].append(condition)
+
+            query["query"]["bool"]["filter"].append(conditions)
+
+            q = {
+                'track_total_hits': True,
+                **query,
+                "_source": selected_fields
+            }
+
+            print(f'PerfRef query: {q}')
+            return q
+        except Exception as e:
+            raise ValueError(f"Failed to format query for the PerfRef rule: {e}")
