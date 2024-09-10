@@ -54,8 +54,9 @@ class BaseRule(ABC):
             return False
 
         # Calculate the net amount for credit and debit transactions
-        credit_amount = credit_txns[field_name].sum()
-        debit_amount = debit_txns[field_name].sum()
+
+        credit_amount = credit_txns[field_name].astype(float).sum()
+        debit_amount = debit_txns[field_name].astype(float).sum()
 
         # Net difference between credit and debit amounts
         net_diff = abs(credit_amount - debit_amount)

@@ -62,7 +62,7 @@ class Rule(BaseRule):
             print(f'Filter-{filter_id} values:')
             for field in filter_params['fields']:
                 if field.value:
-                    print(f'{field.name} - {field.search_agg_exp}')
+                    # print(f'{field.name} - {field.search_agg_exp}')
                     condition = {"regexp": {field.name: f'{field.search_agg_exp}'}}
                     conditions["bool"]["should"].append(condition)
 
@@ -164,11 +164,10 @@ class Rule(BaseRule):
 
             matches_df = pd.concat([filter1_matches, filter2_matches]).drop_duplicates(subset='ITEM_ID', keep='first').reset_index(drop=True)
 
-            matches_df['AMOUNT']=matches_df['AMOUNT'].apply(lambda x: float(x.replace(',','')))
-            matches_df['CONVERTED_AMT'] = matches_df.apply(lambda x: float(x['AMOUNT']) if 'DR' in x['C_OR_D'] else -float(x['AMOUNT']), axis=1)
-
-            result = matches_df.groupby(['RELATIONSHIP_ID'])['CONVERTED_AMT'].sum().reset_index()
-            dist_rel_ids = result[result['CONVERTED_AMT'] == 0]['RELATIONSHIP_ID'].tolist()
+            if self.rule_params.amount:
+                matches_df = matches_df.groupby('RELATIONSHIP_ID').filter(
+                    lambda group: self.check_amount_flag_condition('AMOUNT', self.rule_params.amount, group)
+                )
 
             # matched_rels = [rel_id for rel_id in dist_rel_ids if rel_id not in matched_rels_all]
             matches_df = matches_df[matches_df['RELATIONSHIP_ID'].isin(dist_rel_ids)].sort_values(by=['RELATIONSHIP_ID']).reset_index(drop=True)
@@ -181,7 +180,7 @@ class Rule(BaseRule):
             #         matches_df = matches_df.groupby('RELATIONSHIP_ID').filter(lambda x: x['VALUE_DATE'].nunique() > 1).reset_index(drop=True)
 
             matches_df['Rule_Id'] = self.rule_params.unique_rule_id
-            matches_df.drop(['CONVERTED_AMT'], axis=1, inplace=True)
+            # matches_df.drop(['CONVERTED_AMT'], axis=1, inplace=True)
 
             # matched_rels_all += matched_rels
             # rule_matches.append(matches_df)
