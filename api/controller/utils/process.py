@@ -62,7 +62,8 @@ def process_rules(file):
                 unique_rule_id=row['unique_rule_id'],
                 category_code=row['category_code'],
                 set_id=row['set_id'],
-                amount=row['amount_flag'],
+                amount_check_flags={flag: row[flag] for flag in amount_columns_mapping.keys() if row[flag]},
+                value_date=row['value_date'],
                 value_date=row['value_date_flag'],
             )
         except ValidationError as e:

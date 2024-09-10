@@ -5,7 +5,7 @@ class RuleParams(BaseModel):
     unique_rule_id: str
     category_code: str
     set_id: str
-    amount: str
+    amount_check_flags: Dict
     value_date: str
 
     @validator('unique_rule_id', 'category_code', 'set_id', 'amount', 'value_date')

@@ -21,6 +21,13 @@ configured_reports_index = "matching_matrix_configured_reports"
 reports_run_index = 'matching_matrix_report_runs_index'
 ARCHIVAL_DAYS = 4
 
+
+amount_columns_mapping = {
+    'amount_flag': 'AMOUNT',
+    'amount1_flag': 'AMOUNT1',
+}
+
+
 col_mapping = {
     'ref1': 'SFIELD_7',
     'ref2': 'SFIELD_8',

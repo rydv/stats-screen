@@ -163,10 +163,11 @@ class Rule(BaseRule):
 
             matches_df = pd.concat([filter1_matches, filter2_matches]).drop_duplicates(subset='ITEM_ID', keep='first').reset_index(drop=True)
 
-            if self.rule_params.amount:
-                matches_df = matches_df.groupby('RELATIONSHIP_ID').filter(
-                    lambda group: self.check_amount_flag_condition('AMOUNT', self.rule_params.amount, group)
-                )
+            if self.rule_params.amount_check_flags:
+                for amount_field_flag, amount_flag_value in self.rule_params.amount_check_flags.items():
+                    matches_df = matches_df.groupby('RELATIONSHIP_ID').filter(
+                        lambda group: self.check_amount_flag_condition(amount_check_mapping[amount_field_flag], amount_flag_value, group)
+                    )
 
             # matched_rels = [rel_id for rel_id in dist_rel_ids if rel_id not in matched_rels_all]
             # matches_df = matches_df[matches_df['RELATIONSHIP_ID'].isin(dist_rel_ids)].sort_values(by=['RELATIONSHIP_ID']).reset_index(drop=True)
