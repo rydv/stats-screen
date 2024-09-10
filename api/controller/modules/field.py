@@ -12,12 +12,11 @@ class Field:
         self.valdt_flag = False
         self.op_flag = False
         self.perf_ref_flag = False
+        self.fm_flag = False  # New FM flag
 
         self.valdt_params = {}
         self.op_params = {}
         self.perf_ref_params = {}
-
-        # Extract the ID if present in the value
 
         # If a value is provided, process it
         if self.value:
@@ -29,22 +28,19 @@ class Field:
             self.search_agg_exp = None
 
     def _extract_id(self):
-        # Assuming the ID is provided in the format |ID|<id_value>| at the start of the value string
         id_match = re.match(r'\|ID\|(\d+)\|', self.value)
         if id_match:
             self.id = int(id_match.group(1))
-            # Remove the ID from the value string for further processing
             self.value = self.value[id_match.end():].strip()
 
     def _parse_value(self):
         split_values = []
-        parts = re.split(r'(\|EXACT\||\|EXP\||\|FRMT\||\|OP\||\|PerfRef\|)', self.value)[1:]
+        parts = re.split(r'(\|EXACT\||\|EXP\||\|FRMT\||\|OP\||\|PerfRef\||\|FM\|)', self.value)[1:]
 
         for i in range(0, len(parts), 2):
             identifier = parts[i]
-            content = parts[i + 1]
+            content = parts[i + 1] if i + 1 < len(parts) else ''
 
-            # Determine which strategy to use based on the identifier
             strategy = self._get_strategy(identifier)
             parsed_value = strategy.parse(content)
 
@@ -62,6 +58,8 @@ class Field:
             elif identifier == '|PerfRef|':
                 self.perf_ref_flag = True
                 self.perf_ref_params.update(parsed_value)
+            elif identifier == '|FM|':
+                self.fm_flag = parsed_value['fm']
 
         return split_values
 
@@ -74,13 +72,14 @@ class Field:
             return FRMTStrategy()
         elif identifier == '|OP|':
             return OpStrategy()
-        elif identifier == '|PerfRef|':  # For PerfRef case
+        elif identifier == '|PerfRef|':
             return PerfRefStrategy()
+        elif identifier == '|FM|':
+            return FMStrategy()
         else:
             pass
 
     def _create_search_agg_exp(self):
-        # If PerfRef is present, skip creating the search pattern
         if self.perf_ref_flag:
             return ""
 
@@ -93,13 +92,18 @@ class Field:
 
         return ''.join(parts)
 
-
 # Strategy classes as before
 class ExpressionStrategy(ABC):
     @abstractmethod
     def parse(self, content: str):
         pass
 
+class FMStrategy(ExpressionStrategy):
+    def parse(self, content: str):
+        if content.upper() == 'F':
+            return {'fm': False}
+        else:
+            return {'fm': True}
 class ExactStrategy(ExpressionStrategy):
     def parse(self, content: str):
         return {'exact': content}

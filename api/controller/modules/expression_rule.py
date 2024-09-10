@@ -59,11 +59,10 @@ class Rule(BaseRule):
             condition = {"terms": {"C_OR_D": tran_type}}
             conditions["bool"]["must"].append(condition)
 
-            print(f'Filter-{filter_id} values:')
+            # print(f'Filter-{filter_id} values:')
             for field in filter_params['fields']:
-                if field.value:
-                    # print(f'{field.name} - {field.search_agg_exp}')
-                    condition = {"regexp": {field.name: f'{field.search_agg_exp}'}}
+                condition = self._create_field_condition(field)
+                if condition:
                     conditions["bool"]["should"].append(condition)
 
             query["query"]["bool"]["filter"].append(conditions)
@@ -170,7 +169,7 @@ class Rule(BaseRule):
                 )
 
             # matched_rels = [rel_id for rel_id in dist_rel_ids if rel_id not in matched_rels_all]
-            matches_df = matches_df[matches_df['RELATIONSHIP_ID'].isin(dist_rel_ids)].sort_values(by=['RELATIONSHIP_ID']).reset_index(drop=True)
+            # matches_df = matches_df[matches_df['RELATIONSHIP_ID'].isin(dist_rel_ids)].sort_values(by=['RELATIONSHIP_ID']).reset_index(drop=True)
 
             # if len(matches_df):
             #     matches_df['VALUE_DATE'] = pd.to_datetime(matches_df['VALUE_DATE'])
