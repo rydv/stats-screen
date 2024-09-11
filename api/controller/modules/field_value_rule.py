@@ -72,8 +72,25 @@ class Rule(BaseRule):
             "_source": selected_fields,
             "size": 10000
         }
-        response = es.search(index=matched_data_index, body=query)
-        return [hit['_source'] for hit in response['hits']['hits']]
+        
+        all_transactions = []
+        scroll_id = None
+        
+        while True:
+            if scroll_id:
+                response = es.scroll(scroll_id=scroll_id, scroll='1m')
+            else:
+                response = es.search(index=matched_data_index, body=query, scroll='1m')
+            
+            scroll_id = response['_scroll_id']
+            hits = response['hits']['hits']
+            
+            if not hits:
+                break
+            
+            all_transactions.extend([hit['_source'] for hit in hits])
+        
+        return all_transactions
 
     def find_matches(self) -> pd.DataFrame:
         query = self._filter_query_formatter()
