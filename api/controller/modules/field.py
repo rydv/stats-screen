@@ -13,12 +13,14 @@ class Field:
         self.op_flag = False
         self.perf_ref_flag = False
         self.fm_flag = False
+        self.field_value_flag = False
         self.partname_flag = False
         self.ignore_patterns = []
 
         self.valdt_params = {}
         self.op_params = {}
         self.perf_ref_params = {}
+        self.field_value_params = {}
 
         # If a value is provided, process it
         if self.value:
@@ -37,7 +39,7 @@ class Field:
 
     def _parse_value(self):
         split_values = []
-        parts = re.split(r'(\|EXACT\||\|EXP\||\|FRMT\||\|OP\||\|PerfRef\||\|FM\||\|IGNORE\||\|PARTNAME\|)', self.value)[1:]
+        parts = re.split(r'(\|EXACT\||\|EXP\||\|FRMT\||\|OP\||\|PerfRef\||\|FM\||\|IGNORE\||\|PARTNAME\||\|FIELD_VALUE\|)', self.value)[1:]
 
         for i in range(0, len(parts), 2):
             identifier = parts[i]
@@ -68,6 +70,11 @@ class Field:
                 self.partname_flag = True
                 self.exp_flag = True
                 split_values.append(parsed_value)
+            elif identifier == '|FIELD_VALUE|':
+                self.field_value_flag = True
+                self.exp_flag = True
+                self.field_value_params.update(parsed_value)
+                split_values.append(parsed_value)
 
         return split_values
 
@@ -88,6 +95,8 @@ class Field:
             return IgnoreStrategy()
         elif identifier == '|PARTNAME|':
             return PartNameStrategy()
+        elif identifier == '|FIELD_VALUE|':
+            return FieldValueStrategy()
         else:
             pass
 
@@ -103,6 +112,8 @@ class Field:
                 parts.append(value['exp'])
             if 'partname' in value:
                 parts.append(r'([A-Za-z\s]+)')
+            if 'field_value' in value:
+                parts.append(value['field_value']['exp'])
 
         expression = ''.join(parts)
 
@@ -167,3 +178,8 @@ class IgnoreStrategy(ExpressionStrategy):
 class PartNameStrategy(ExpressionStrategy):
     def parse(self, content: str):
         return {'partname': True}
+    
+class FieldValueStrategy(ExpressionStrategy):
+    def parse(self, content: str):
+        field_name, exp = content.split('|')
+        return {'field_value': {'field_name': field_name, 'exp': exp}}

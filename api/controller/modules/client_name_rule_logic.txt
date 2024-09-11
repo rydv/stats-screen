@@ -1,0 +1,53 @@
+    Documentation for client_name_rule.py:
+
+    Logic Flow:
+
+        Entry point through api/controller/utils/process.py
+        CSV file is read and data is loaded into memory.
+        Common rule parameters are initialized using RuleParams class.
+        Field values are parsed using the Field class from api/controller/modules/field.py:
+            Field objects are created for each column in the CSV.
+            The _extract_id method is called to extract any ID information.
+            The _parse_value method processes the field value, handling |EXACT|, |EXP|, and |PARTNAME| identifiers.
+            Flags (exp_flag, partname_flag) are set based on the identifiers found.
+            The _create_search_agg_exp method creates a search pattern, including the ([A-Za-z\s]+) pattern for |PARTNAME|.
+        The rule type is identified as 'client_name' based on the presence of partname_flag in the fields.
+        The ClientNameRule class is instantiated with the rule parameters, l_s, d_c, and fields.
+
+    ClientNameRule Class Structure:
+
+        Inherits from BaseRule
+        Initializes with rule_params, l_s, d_c, and fields
+        Key methods:
+            a. _extract_matched_value(row, filter_field_values):
+                Extracts matched values and partnames separately
+                Returns a tuple of concatenated matched values and partname
+            b. _compare_partnames(name1, name2):
+                Compares two partnames by splitting into words and checking for common parts
+            c. find_matches():
+                Main method to find matching transactions
+                Uses _filter_query_formatter to create queries for both filters
+                Fetches matching transactions using _get_filter_matches
+                Extracts matched values and partnames for both filters
+                Groups transactions by RELATIONSHIP_ID and compares partnames
+                Applies amount flag filter if specified
+                Returns a DataFrame of matched transactions
+
+    Matching Logic:
+
+        Transactions are fetched using Elasticsearch scroll API and grouped by relationship ID.
+        For each relationship group:
+            Extract matched values and partnames for both filters
+            Compare partnames between the two filters
+            Consider a match valid if partnames have at least one common word
+            Apply amount flag filtering if specified
+            Return matched transactions with Rule_Id and MATCHED_VALUE
+
+    Output:
+
+        A DataFrame containing matched transactions, including:
+            Original transaction details
+            MATCHED_VALUE column with matched expressions and partnames
+            Rule_Id for traceability
+
+    This documentation outlines the structure, key methods, logic flow, and matching process of the client_name_rule.py implementation.
