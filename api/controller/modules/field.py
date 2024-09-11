@@ -13,6 +13,7 @@ class Field:
         self.op_flag = False
         self.perf_ref_flag = False
         self.fm_flag = False
+        self.partname_flag = False
         self.ignore_patterns = []
 
         self.valdt_params = {}
@@ -36,7 +37,7 @@ class Field:
 
     def _parse_value(self):
         split_values = []
-        parts = re.split(r'(\|EXACT\||\|EXP\||\|FRMT\||\|OP\||\|PerfRef\||\|FM\||\|IGNORE\|)', self.value)[1:]
+        parts = re.split(r'(\|EXACT\||\|EXP\||\|FRMT\||\|OP\||\|PerfRef\||\|FM\||\|IGNORE\||\|PARTNAME\|)', self.value)[1:]
 
         for i in range(0, len(parts), 2):
             identifier = parts[i]
@@ -63,6 +64,9 @@ class Field:
                 self.fm_flag = parsed_value['fm']
             elif identifier == '|IGNORE|':
                 self.ignore_patterns.append(parsed_value)
+            elif identifier == '|PARTNAME|':
+                self.partname_flag = True
+                split_values.append(parsed_value)
 
         return split_values
 
@@ -81,6 +85,8 @@ class Field:
             return FMStrategy()
         elif identifier == '|IGNORE|':
             return IgnoreStrategy()
+        elif identifier == '|PARTNAME|':
+            return PartNameStrategy()
         else:
             pass
 
@@ -94,11 +100,10 @@ class Field:
                 parts.append(re.escape(value['exact']))
             if 'exp' in value:
                 parts.append(value['exp'])
+            if 'partname' in value:
+                parts.append(r'([A-Za-z\s]+)')
 
         expression = ''.join(parts)
-        if self.ignore_patterns:
-            ignore_pattern = '|'.join(re.escape(p) for p in self.ignore_patterns)
-            expression = f"(?!.*({ignore_pattern})){expression}"
 
         return expression
 
@@ -157,3 +162,7 @@ class FMStrategy(ExpressionStrategy):
 class IgnoreStrategy(ExpressionStrategy):
     def parse(self, content: str):
         return content.strip()
+    
+class PartNameStrategy(ExpressionStrategy):
+    def parse(self, content: str):
+        return {'partname': True}
