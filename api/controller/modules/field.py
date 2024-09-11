@@ -5,6 +5,7 @@ class Field:
         self.name = name
         self.alias = alias
         self.value = value.strip() if value else None
+        self.identifiers_list = ['EXACT', 'EXP', 'FRMT', 'OP', 'PerfRef', 'FM', 'IGNORE', 'PARTNAME', 'FIELD_VALUE']
 
         # Initialize flags and parameters
         self.id = None
@@ -39,7 +40,8 @@ class Field:
 
     def _parse_value(self):
         split_values = []
-        parts = re.split(r'(\|EXACT\||\|EXP\||\|FRMT\||\|OP\||\|PerfRef\||\|FM\||\|IGNORE\||\|PARTNAME\||\|FIELD_VALUE\|)', self.value)[1:]
+        pattern = '|'.join(f'(\\|{identifier}\\|)' for identifier in self.identifiers_list)
+        parts = re.split(pattern, self.value)[1:]
 
         for i in range(0, len(parts), 2):
             identifier = parts[i]
