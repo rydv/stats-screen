@@ -97,18 +97,28 @@ class Rule(BaseRule):
                 match = re.search(exp, source[field_name])
                 
                 if match:
-                    matched_item_ids[relationship_id] = match.group()
+                    matched_item_ids[relationship_id] = {
+                        'source_item_id': source['ITEM_ID'],
+                        'matched_value': match.group()
+                    }
 
         all_transactions = self._fetch_all_transactions(es, list(relationship_ids))
-        matched_transactions = []
+        df = pd.DataFrame(all_transactions)
+        grouped = df.groupby('RELATIONSHIP_ID')
 
-        for transaction in all_transactions:
-            relationship_id = transaction['RELATIONSHIP_ID']
+        matched_transactions = []
+        for relationship_id, group in grouped:
             if relationship_id in matched_item_ids:
-                if transaction['ITEM_ID'] == matched_item_ids[relationship_id]:
-                    matched_transactions.append(transaction)
-                elif transaction['C_OR_D'] == f"{self.filter1_params['l_s']} {self.filter1_params['d_c']}R":
-                    matched_transactions.append(transaction)
+                match_info = matched_item_ids[relationship_id]
+                source_item_id = match_info['source_item_id']
+                matched_value = match_info['matched_value']
+                
+                source_transaction = group[group['ITEM_ID'] == source_item_id]
+                matched_transaction = group[(group['ITEM_ID'] != source_item_id) & (group['ITEM_ID'] == matched_value)]
+                
+                if not source_transaction.empty and not matched_transaction.empty:
+                    matched_transactions.extend(source_transaction.to_dict('records'))
+                    matched_transactions.extend(matched_transaction.to_dict('records'))
 
         if matched_transactions:
             final_df = pd.DataFrame(matched_transactions)
