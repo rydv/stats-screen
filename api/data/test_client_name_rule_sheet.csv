@@ -1,0 +1,3 @@
+unique_rule_id,category_code,set_id,or_and_flag,value_date_flag,amount_flag,ls_flag,dc_flag,ref1,ref2,ref3,ref4
+SG\2021\NOS\MAT-0050,SINGAPORE,ALL,AND,No,Same,L,A,,|EXACT|CASH EXCEES TELLER 03 |PARTNAME|,,
+SG\2021\NOS\MAT-0050,SINGAPORE,ALL,AND,No,Same,S,A,,,|EXACT|REV CASH EXCEES TELLER 03 |PARTNAME|,
