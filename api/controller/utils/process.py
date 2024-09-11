@@ -9,6 +9,7 @@ from controllers.matching_matrix_controller.modules.rule_params import RuleParam
 from controllers.matching_matrix_controller.modules.expression_rule import Rule as ExpRule
 from controllers.matching_matrix_controller.modules.value_date_rule import Rule as ValdtRule
 from controllers.matching_matrix_controller.modules.perf_ref_rule import Rule as PerfRefRule
+from controllers.matching_matrix_controller.modules.client_name_rule import Rule as ClientNameRule
 
 def validate_rule(rule):
     try:
@@ -31,12 +32,15 @@ def identify_rule_type(fields: List[Field]):
         rule_type = 'value_date'
     elif any([field.op_flag for field in fields]):
         rule_type = 'operation'
+    elif any([field.partname_flag for field in fields]):
+        rule_type = 'client_name'
     return rule_type
 
 def process_rules(file):
     valid_rules = {
         "exact": [],
-        "expression": []
+        "expression": [],
+        "client_name": []
     }
     rejected_rules = []
 
@@ -63,7 +67,6 @@ def process_rules(file):
                 category_code=row['category_code'],
                 set_id=row['set_id'],
                 amount_check_flags={flag: row[flag] for flag in amount_columns_mapping.keys() if row[flag]},
-                value_date=row['value_date'],
                 value_date=row['value_date_flag'],
             )
         except ValidationError as e:
@@ -86,6 +89,8 @@ def process_rules(file):
                 current_rule = ValdtRule(rule_params, l_s, d_c, fields)
             elif rule_type == 'operation':
                 current_rule = ValdtRule(rule_params, l_s, d_c, fields)
+            elif rule_type == 'client_name':
+                current_rule = ClientNameRule(rule_params, l_s, d_c, fields)
             else:
                 current_rule = ExpRule(rule_params, l_s, d_c, fields)
 
