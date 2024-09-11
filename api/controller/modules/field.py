@@ -12,7 +12,8 @@ class Field:
         self.valdt_flag = False
         self.op_flag = False
         self.perf_ref_flag = False
-        self.fm_flag = False  # New FM flag
+        self.fm_flag = False
+        self.ignore_patterns = []
 
         self.valdt_params = {}
         self.op_params = {}
@@ -35,7 +36,7 @@ class Field:
 
     def _parse_value(self):
         split_values = []
-        parts = re.split(r'(\|EXACT\||\|EXP\||\|FRMT\||\|OP\||\|PerfRef\||\|FM\|)', self.value)[1:]
+        parts = re.split(r'(\|EXACT\||\|EXP\||\|FRMT\||\|OP\||\|PerfRef\||\|FM\||\|IGNORE\|)', self.value)[1:]
 
         for i in range(0, len(parts), 2):
             identifier = parts[i]
@@ -60,6 +61,8 @@ class Field:
                 self.perf_ref_params.update(parsed_value)
             elif identifier == '|FM|':
                 self.fm_flag = parsed_value['fm']
+            elif identifier == '|IGNORE|':
+                self.ignore_patterns.append(parsed_value)
 
         return split_values
 
@@ -76,6 +79,8 @@ class Field:
             return PerfRefStrategy()
         elif identifier == '|FM|':
             return FMStrategy()
+        elif identifier == '|IGNORE|':
+            return IgnoreStrategy()
         else:
             pass
 
@@ -90,20 +95,18 @@ class Field:
             if 'exp' in value:
                 parts.append(value['exp'])
 
-        return ''.join(parts)
+        expression = ''.join(parts)
+        if self.ignore_patterns:
+            ignore_pattern = '|'.join(re.escape(p) for p in self.ignore_patterns)
+            expression = f"(?!.*({ignore_pattern})){expression}"
 
-# Strategy classes as before
+        return expression
+
 class ExpressionStrategy(ABC):
     @abstractmethod
     def parse(self, content: str):
         pass
 
-class FMStrategy(ExpressionStrategy):
-    def parse(self, content: str):
-        if content.upper() == 'F':
-            return {'fm': False}
-        else:
-            return {'fm': True}
 class ExactStrategy(ExpressionStrategy):
     def parse(self, content: str):
         return {'exact': content}
@@ -143,3 +146,14 @@ class PerfRefStrategy(ExpressionStrategy):
             result['min_length'] = 5
         
         return result
+
+class FMStrategy(ExpressionStrategy):
+    def parse(self, content: str):
+        if content.upper() == 'F':
+            return {'fm': False}
+        else:
+            return {'fm': True}
+
+class IgnoreStrategy(ExpressionStrategy):
+    def parse(self, content: str):
+        return content.strip()
