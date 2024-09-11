@@ -44,13 +44,20 @@ class BaseRule(ABC):
         return (filter1_flag & filter2_flag)
     
     def _create_field_condition(self, field):
-            if field.value:
-                if not field.fm_flag:
-                    expression = f'.*{field.search_agg_exp}.*'
-                else:
-                    expression = field.search_agg_exp
-                return {"regexp": {field.name: expression}}
-            return None
+        if field.value:
+            if field.ignore_patterns:
+                ignore_pattern = '|'.join(re.escape(p) for p in field.ignore_patterns)
+                negative_lookahead = f"(?!.*({ignore_pattern}))"
+            else:
+                negative_lookahead = ""
+
+            if not field.fm_flag:
+                expression = f'{negative_lookahead}.*{field.search_agg_exp}.*'
+            else:
+                expression = f'{negative_lookahead}{field.search_agg_exp}'
+
+            return {"regexp": {field.name: expression}}
+        return None
 
     def check_amount_flag_condition(self, field_name: str, flag_value: str, relationship_group: pd.DataFrame) -> bool:
         """Checks the AMOUNT field based on the amount_flag condition for the relationship group."""
