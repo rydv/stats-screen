@@ -100,43 +100,29 @@ class Rule(BaseRule):
             if scroll_id:
                 es.clear_scroll(scroll_id=scroll_id)
 
-    def validate_ref_values(self):
-        pass
-        # for key, value in self.filter1.items():
-        #     if not isinstance(value, str):
-        #         raise ValueError(f"Filter1 {key} must be a string")
-        
-        # for key, value in self.filter2.items():
-        #     if not isinstance(value, str):
-        #         raise ValueError(f"Filter2 {key} must be a string")
-
     def _extract_matched_value(self, row, filter_field_values):
         matched_values = []
+        partname_values = []
         for field in filter_field_values:
-            if field.exp_flag:
-                # print(field.name, field.search_agg_exp)
-                # print(row[field.name])
-                match = re.findall(field.search_agg_exp, row[field.name])
-                # print(f'match: {match}')
-                if len(match):
-                    if isinstance(match[0], tuple):
-                        matched_values.extend(list(match[0]))
-                    else:
-                        matched_values.append(match[0])
-                # print(matched_values)
-                # print('------')
+            if field.exp_flag or field.partname_flag:
+                match = re.search(field.search_agg_exp, row[field.name])
+                if match:
+                    groups = match.groups()
+                    matched_values.extend(groups[:-1])  # All groups except the last one (partname)
+                    partname_values.append(groups[-1])  # Last group is partname
         
-        matched_values.sort()
-        # print(" | ".join(matched_values))
-        return " | ".join(matched_values)
+        return " | ".join(matched_values), " ".join(partname_values)
+
+    def _compare_partnames(self, name1, name2):
+        name1_parts = set(name1.lower().split())
+        name2_parts = set(name2.lower().split())
+        return bool(name1_parts & name2_parts)
 
     def find_matches(self):
         queries = {
-            "filter1": None,
-            "filter2": None,
+            "filter1": self._filter_query_formatter(self.filter1_params, 1),
+            "filter2": self._filter_query_formatter(self.filter2_params, 2),
         }
-        queries['filter1'] = self._filter_query_formatter(self.filter1_params, 1)
-        queries['filter2'] = self._filter_query_formatter(self.filter2_params, 2)
 
         filter1_matches = self._get_filter_matches(queries['filter1'])
         filter2_matches = self._get_filter_matches(queries['filter2'])
@@ -147,43 +133,28 @@ class Rule(BaseRule):
         if not (len(filter1_matches) and len(filter2_matches)):
             print('Matches not found for at least one of the filters')
             return pd.DataFrame(columns=selected_fields)
-        else:
-            filter1_matches['Filter'] = 'Filter-1'
-            filter2_matches['Filter'] = 'Filter-2'
 
-            value_date_flag = self.rule_params.value_date
-            exp_flag = self._exp_flag_check()
+        filter1_matches['Filter'] = 'Filter-1'
+        filter2_matches['Filter'] = 'Filter-2'
 
-            if exp_flag:
-                filter1_matches['concat_matched_value'] = filter1_matches.apply(lambda row: self._extract_matched_value(row, self.filter1_params['fields']), axis=1)
-                filter2_matches['concat_matched_value'] = filter2_matches.apply(lambda row: self._extract_matched_value(row, self.filter2_params['fields']), axis=1)
-            else:
-                filter1_matches['concat_matched_value'] = ''
-                filter2_matches['concat_matched_value'] = ''
+        filter1_matches['concat_matched_value'], filter1_matches['partname'] = zip(*filter1_matches.apply(
+            lambda row: self._extract_matched_value(row, self.filter1_params['fields']), axis=1))
+        filter2_matches['concat_matched_value'], filter2_matches['partname'] = zip(*filter2_matches.apply(
+            lambda row: self._extract_matched_value(row, self.filter2_params['fields']), axis=1))
 
-            matches_df = pd.concat([filter1_matches, filter2_matches]).drop_duplicates(subset='ITEM_ID', keep='first').reset_index(drop=True)
+        matches_df = pd.concat([filter1_matches, filter2_matches]).reset_index(drop=True)
 
-            if self.rule_params.amount_check_flags:
-                for amount_field_flag, amount_flag_value in self.rule_params.amount_check_flags.items():
-                    matches_df = matches_df.groupby(['RELATIONSHIP_ID', 'concat_matched_value']).filter(
-                        lambda group: self.check_amount_flag_condition(amount_check_mapping[amount_field_flag], amount_flag_value, group)
-                    )
+        # Group by RELATIONSHIP_ID and compare partnames
+        grouped = matches_df.groupby('RELATIONSHIP_ID')
+        valid_matches = grouped.filter(lambda x: len(x) == 2 and 
+                                       self._compare_partnames(x['partname'].iloc[0], x['partname'].iloc[1]))
 
-            # matched_rels = [rel_id for rel_id in dist_rel_ids if rel_id not in matched_rels_all]
-            # matches_df = matches_df[matches_df['RELATIONSHIP_ID'].isin(dist_rel_ids)].sort_values(by=['RELATIONSHIP_ID']).reset_index(drop=True)
+        if self.rule_params.amount_check_flags:
+            for amount_field_flag, amount_flag_value in self.rule_params.amount_check_flags.items():
+                valid_matches = valid_matches.groupby(['RELATIONSHIP_ID', 'concat_matched_value']).filter(
+                    lambda group: self.check_amount_flag_condition(amount_check_mapping[amount_field_flag], amount_flag_value, group)
+                )
 
-            # if len(matches_df):
-            #     matches_df['VALUE_DATE'] = pd.to_datetime(matches_df['VALUE_DATE'])
-            #     if value_date_flag.upper() == "YES":
-            #         matches_df = matches_df.groupby('RELATIONSHIP_ID').filter(lambda x: x['VALUE_DATE'].nunique() == 1).reset_index(drop=True)
-            #     elif value_date_flag.upper() == "NO":
-            #         matches_df = matches_df.groupby('RELATIONSHIP_ID').filter(lambda x: x['VALUE_DATE'].nunique() > 1).reset_index(drop=True)
-
-            matches_df['Rule_Id'] = self.rule_params.unique_rule_id
-            # matches_df.drop(['CONVERTED_AMT'], axis=1, inplace=True)
-
-            # matched_rels_all += matched_rels
-            # rule_matches.append(matches_df)
-
-            print(f'Matches for {self.rule_params.unique_rule_id}: {len(matches_df)}')
-            return matches_df
+        valid_matches['Rule_Id'] = self.rule_params.unique_rule_id
+        print(f'Matches for {self.rule_params.unique_rule_id}: {len(valid_matches)}')
+        return valid_matches

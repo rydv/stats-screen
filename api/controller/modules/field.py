@@ -66,6 +66,7 @@ class Field:
                 self.ignore_patterns.append(parsed_value)
             elif identifier == '|PARTNAME|':
                 self.partname_flag = True
+                self.exp_flag = True
                 split_values.append(parsed_value)
 
         return split_values
