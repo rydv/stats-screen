@@ -43,7 +43,7 @@ class Rule(BaseRule):
             return {
                 'track_total_hits': True,
                 **query,
-                "_source": selected_fields
+                "_source": ["RELATIONSHIP_ID", "ITEM_ID", self.field_value_field.name]
             }
         except Exception as e:
             raise ValueError(f"Failed to format query for the field value rule: {e}")
@@ -58,51 +58,57 @@ class Rule(BaseRule):
 
             scroll_id = response['_scroll_id']
             hits = response['hits']['hits']
-            transactions = [hit['_source'] for hit in hits]
-            return scroll_id, transactions
+            return scroll_id, hits
         except Exception as e:
             raise ValueError(f'Failed to get matches for the filter: {e}')
 
-    def _find_matching_transaction(self, es, transaction):
-        field_name = self.field_value_field.field_value_params['field_value']['field_name']
-        exp = self.field_value_field.field_value_params['field_value']['exp']
-        match = re.search(exp, transaction[field_name])
-        
-        if not match:
-            return None
-
-        extracted_value = match.group()
+    def _fetch_all_transactions(self, es, relationship_ids):
         query = {
             "query": {
-                "bool": {
-                    "must": [
-                        {"term": {"RELATIONSHIP_ID": transaction['RELATIONSHIP_ID']}},
-                        {"term": {"ITEM_ID": extracted_value}},
-                        {"bool": {"must_not": {"term": {"ITEM_ID": transaction['ITEM_ID']}}}}
-                    ]
+                "terms": {
+                    "RELATIONSHIP_ID": relationship_ids
                 }
-            }
+            },
+            "_source": selected_fields,
+            "size": 10000
         }
-
-        response = es.search(index=matched_data_index, body=query, size=1)
-        hits = response['hits']['hits']
-        return hits[0]['_source'] if hits else None
+        response = es.search(index=matched_data_index, body=query)
+        return [hit['_source'] for hit in response['hits']['hits']]
 
     def find_matches(self) -> pd.DataFrame:
         query = self._filter_query_formatter()
         scroll_id = None
-        matched_transactions = []
+        relationship_ids = set()
+        matched_item_ids = {}
         es = es_connect()
 
         while True:
-            scroll_id, transactions = self._scroll_transactions(query, scroll_id)
-            if not transactions:
+            scroll_id, hits = self._scroll_transactions(query, scroll_id)
+            if not hits:
                 break
 
-            for transaction in transactions:
-                matching_transaction = self._find_matching_transaction(es, transaction)
-                if matching_transaction:
-                    matched_transactions.extend([transaction, matching_transaction])
+            for hit in hits:
+                source = hit['_source']
+                relationship_id = source['RELATIONSHIP_ID']
+                relationship_ids.add(relationship_id)
+                
+                field_name = self.field_value_field.name
+                exp = self.field_value_field.field_value_params['field_value']['exp']
+                match = re.search(exp, source[field_name])
+                
+                if match:
+                    matched_item_ids[relationship_id] = match.group()
+
+        all_transactions = self._fetch_all_transactions(es, list(relationship_ids))
+        matched_transactions = []
+
+        for transaction in all_transactions:
+            relationship_id = transaction['RELATIONSHIP_ID']
+            if relationship_id in matched_item_ids:
+                if transaction['ITEM_ID'] == matched_item_ids[relationship_id]:
+                    matched_transactions.append(transaction)
+                elif transaction['C_OR_D'] == f"{self.filter1_params['l_s']} {self.filter1_params['d_c']}R":
+                    matched_transactions.append(transaction)
 
         if matched_transactions:
             final_df = pd.DataFrame(matched_transactions)
