@@ -10,6 +10,7 @@ from controllers.matching_matrix_controller.modules.expression_rule import Rule 
 from controllers.matching_matrix_controller.modules.value_date_rule import Rule as ValdtRule
 from controllers.matching_matrix_controller.modules.perf_ref_rule import Rule as PerfRefRule
 from controllers.matching_matrix_controller.modules.client_name_rule import Rule as ClientNameRule
+from controllers.matching_matrix_controller.modules.field_value_rule import Rule as FieldValueRule
 
 def validate_rule(rule):
     try:
@@ -34,13 +35,16 @@ def identify_rule_type(fields: List[Field]):
         rule_type = 'operation'
     elif any([field.partname_flag for field in fields]):
         rule_type = 'client_name'
+    elif any([field.field_value_flag for field in fields]):
+        rule_type = 'field_value'
     return rule_type
 
 def process_rules(file):
     valid_rules = {
         "exact": [],
         "expression": [],
-        "client_name": []
+        "client_name": [],
+        "field_value": []
     }
     rejected_rules = []
 
@@ -91,6 +95,8 @@ def process_rules(file):
                 current_rule = ValdtRule(rule_params, l_s, d_c, fields)
             elif rule_type == 'client_name':
                 current_rule = ClientNameRule(rule_params, l_s, d_c, fields)
+            elif rule_type == 'field_value':
+                current_rule = FieldValueRule(rule_params, l_s, d_c, fields)
             else:
                 current_rule = ExpRule(rule_params, l_s, d_c, fields)
 
