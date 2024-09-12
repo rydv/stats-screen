@@ -1,0 +1,51 @@
+
+Here are regex patterns for various scenarios involving combinations of numerics and alphabets, along with examples:
+
+Exactly n digits: Regex: \d{n} Example: \d{5} matches "12345"
+Alphanumeric with exactly n characters: Regex: [A-Za-z0-9]{n} Example: [A-Za-z0-9]{6} matches "A1B2C3" or "123ABC"
+At least n digits: Regex: \d{n,} Example: \d{3,} matches "123" or "1234567"
+Between n and m digits: Regex: \d{n,m} Example: \d{3,5} matches "123" or "12345"
+Alphanumeric with at least n characters: Regex: [A-Za-z0-9]{n,} Example: [A-Za-z0-9]{4,} matches "A1B2" or "123ABC456"
+Alphanumeric starting with a letter, followed by digits: Regex: [A-Za-z][A-Za-z0-9]*\d+ Example: Matches "A123", "AB12C34", "X1"
+Alphanumeric with alternating letters and digits: Regex: ([A-Za-z]\d){n} Example: ([A-Za-z]\d){3} matches "A1B2C3"
+Alphanumeric with specific pattern: Regex: [A-Z]{2}\d{3}[A-Z]{2} Example: Matches "AB123CD", "XY789PQ"
+Alphanumeric with symbols, any length: Regex: [A-Za-z0-9!@#$%^&*()_+-=[]{};':"\|,.<>/?]+ Example: Matches "A1@B2#C3" or "123!ABC$456"
+Alphanumeric with symbols, exactly n characters: Regex: [A-Za-z0-9!@#$%^&()_+-=[]{};':"\|,.<>/?]{n} Example: [A-Za-z0-9!@#$%^&()_+-=[]{};':"\|,.<>/?]{6} matches "A1@B2#" or "123$%^"
+Starts with letter, followed by alphanumeric and symbols: Regex: [A-Za-z][A-Za-z0-9!@#$%^&()_+-=[]{};':"\|,.<>/?] Example: Matches "A123@#", "X1$%^&*"
+Specific pattern with symbols: Regex: [A-Z]{2}\d{3}[!@#$%^&*()]{2} Example: Matches "AB123!@", "XY789$%"
+
+
+Here's a structured list of regex expressions, starting from simple to more complex, with examples and explanations:
+
+Only digits:
+
+Exactly n digits: \d{n} Example: \d{5} matches "12345"
+Between n and m digits: \d{n,m} Example: \d{3,5} matches "123", "1234", or "12345"
+At least n digits: \d{n,} Example: \d{3,} matches "123", "1234", "12345", etc.
+Only alphabets:
+
+Exactly n alphabets: [A-Za-z]{n} Example: [A-Za-z]{4} matches "ABCD" or "abcd"
+Between n and m alphabets: [A-Za-z]{n,m} Example: [A-Za-z]{2,4} matches "AB", "ABC", or "ABCD"
+At least n alphabets: [A-Za-z]{n,} Example: [A-Za-z]{3,} matches "ABC", "ABCD", "ABCDE", etc.
+Alphanumerics:
+
+Exactly n alphanumeric characters: [A-Za-z0-9]{n} Example: [A-Za-z0-9]{5} matches "A1B2C" or "12345"
+Between n and m alphanumeric characters: [A-Za-z0-9]{n,m} Example: [A-Za-z0-9]{3,5} matches "A1B", "12CD", or "AB123"
+At least n alphanumeric characters: [A-Za-z0-9]{n,} Example: [A-Za-z0-9]{4,} matches "A1B2", "123ABC", "ABCD1234", etc.
+Starting patterns:
+
+Starting with an alphabet: ^[A-Za-z] Example: ^[A-Za-z] matches "Apple" but not "1Apple"
+Starting with a number: ^\d Example: ^\d matches "123Apple" but not "Apple123"
+Containing whitespace:
+
+Contains exactly one whitespace: \S+\s\S+ Example: \S+\s\S+ matches "Hello World" but not "HelloWorld"
+Contains one or more whitespaces: \S+(\s+\S+)+ Example: \S+(\s+\S+)+ matches "Hello World" and "Hello Beautiful World"
+Containing symbols:
+
+Contains at least one symbol: .[!@#$%^&()_+-=[]{};':"\|,.<>/?].* Example: Matches "Hello!" and "123@ABC"
+Exactly n symbols: [!@#$%^&()_+-=[]{};':"\|,.<>/?]{n} Example: [!@#$%^&()_+-=[]{};':"\|,.<>/?]{3} matches "@#$"
+Between n and m symbols: [!@#$%^&()_+-=[]{};':"\|,.<>/?]{n,m} Example: [!@#$%^&()_+-=[]{};':"\|,.<>/?]{2,4} matches "@#", "@#$", or "@#$%"
+Complex combinations:
+
+Starts with letter, followed by digits and symbols: ^[A-Za-z][A-Za-z0-9!@#$%^&()_+-=[]{};':"\|,.<>/?] Example: Matches "A123@#", "X1$%^&*"
+Contains at least one letter, one digit, and one symbol: (?=.[A-Za-z])(?=.\d)(?=.[!@#$%^&()_+-=[]{};':"\|,.<>/?]).* Example: Matches "A1!", "abc123$%^"
