@@ -53,3 +53,28 @@ Description: Defines a perfect reference rule with a minimum matching length.
 Example: |PerfRef|RL|5-
 
 Explanation: This rule indicates a perfect reference match should be at least 5 characters long.
+
+
+• Amount Flag Checks
+
+Description: Specifies conditions for comparing the net amounts of credit and debit transactions within a relationship group.
+
+Flag Values:
+
+Same Description: The net amount of the relationship group should be zero. Example: self.amount_flag = 'Same' Explanation: This ensures that the sum of credit transactions exactly balances the sum of debit transactions.
+
+Different|| Description: Allows for a specified difference between net credit and debit transaction amounts.
+
+Operators:
+
+LE: Less than or Equal to
+L: Less than
+GE: Greater than or Equal to
+G: Greater than
+Examples: a. Different|LE|50 Explanation: The absolute difference between net credit and net debit amounts should be less than or equal to 50.
+
+b. Different|L|50 Explanation: The absolute difference between net credit and net debit amounts should be strictly less than 50.
+
+c. Different|GE|50 Explanation: The absolute difference between net credit and net debit amounts should be greater than or equal to 50.
+
+d. Different|G|50 Explanation: The absolute difference between net credit and net debit amounts should be strictly greater than 50.
