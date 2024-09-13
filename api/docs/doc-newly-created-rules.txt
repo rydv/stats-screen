@@ -1,0 +1,55 @@
+• |FIELD_VALUE|<field_name>|
+
+Description: Specifies a field name and an expression to match within that field's value.
+
+Example: |FIELD_VALUE|ITEM_ID|(\d{5,15})
+
+Explanation: This rule looks for a sequence of 5 to 15 digits in the ITEM_ID field and captures it for comparison.
+
+• |PARTNAME|
+
+Description: Indicates that the field contains a part name, which should be extracted and compared.
+
+Example: |EXACT|CASH EXCEES TELLER 03 |PARTNAME|
+
+Explanation: This rule extracts the part name following "CASH EXCEES TELLER 03" for comparison.
+
+• |FM|
+
+Description: Indicates whether full matching is required (T) or not (F).
+
+Example: |FM|T
+
+Explanation: This rule specifies that full matching is required for the associated expression.
+
+• |IGNORE|
+
+Description: Specifies a pattern to be ignored during matching.
+
+Example: |IGNORE|AMDXX
+
+Explanation: This rule instructs to ignore the pattern "AMDXX" when matching.
+
+• |PerfRef|RL|-
+
+Description: Defines a perfect reference rule with a specified range for matching length.
+
+Example: |PerfRef|RL|5-10
+
+Explanation: This rule indicates a perfect reference match should be between 5 and 10 characters long.
+
+• |PerfRef|RL|
+
+Description: Defines a perfect reference rule with an exact matching length.
+
+Example: |PerfRef|RL|5
+
+Explanation: This rule indicates a perfect reference match should be exactly 5 characters long.
+
+• |PerfRef|RL|-
+
+Description: Defines a perfect reference rule with a minimum matching length.
+
+Example: |PerfRef|RL|5-
+
+Explanation: This rule indicates a perfect reference match should be at least 5 characters long.
