@@ -1,7 +1,6 @@
 import re
 import pandas as pd
-from typing import Dict, List
-from datetime import datetime
+from typing import List
 from controllers.matching_matrix_controller.config.config import *
 from controllers.matching_matrix_controller.config.elasticsearch_client import es_connect
 from controllers.matching_matrix_controller.modules.field import Field
@@ -11,21 +10,9 @@ from controllers.matching_matrix_controller.modules.base_rule import BaseRule
 class Rule(BaseRule):
     def __init__(self, rule_params: RuleParams, l_s: str, d_c: str, fields: List[Field]):
         super().__init__(rule_params, l_s, d_c, fields)
-        # self.date_frmt = self._get_date_frmt()
-
-    def _get_date_frmt(self):
-        for field in self.filter1_params['fields']:
-            if field.valdt_flag:
-                return field.valdt_params["date_format"]
-
-    def _exp_flag_check(self):
-        filter1_flag = any([field.exp_flag for field in self.filter1_params['fields']])
-        return filter1_flag
 
     def _filter_query_formatter(self, filter_params, filter_id):
         try:
-            print('---')
-            print(f'Formatting query for filter-{filter_id}')
             rule_params = self.rule_params
             query = {
                 "query": {
@@ -56,7 +43,8 @@ class Rule(BaseRule):
                     "minimum_should_match": 1
                 }
             }
-
+            
+            #speicfic set ids check
             set_ids = rule_params.set_id
             if set_ids != 'ALL':
                 condition = {"terms": {"LOCAL_ACC_NO": set_ids}}
@@ -66,31 +54,28 @@ class Rule(BaseRule):
                 tran_type = [f"{filter_params['l_s']} {filter_params['d_c']}R"]
             else:
                 tran_type = [f"{filter_params['l_s']} CR", f"{filter_params['l_s']} DR"]
-
+            
             print(f'Trans Type: {tran_type}')
             condition = {"terms": {"C_OR_D": tran_type}}
             conditions["bool"]["must"].append(condition)
 
-            print(f'Filter-{filter_id} values:')
+            # print(f'Filter-{filter_id} values:')
             for field in filter_params['fields']:
-                if field.value:
-                    # print(f'{field.name} - {field.search_agg_exp}')
-                    condition = {"regexp": {field.name: f'.*{field.search_agg_exp}.*'}}
+                condition = self._create_field_condition(field)
+                if condition:
                     conditions["bool"]["should"].append(condition)
 
             query["query"]["bool"]["filter"].append(conditions)
 
-            q = {
+            q={
                 'track_total_hits': True,
                 **query,
                 "_source": selected_fields
             }
-
-            # print(f'Filter-{filter_id} query: {q}')
             return q
         except Exception as e:
             raise ValueError(f"Failed to format query for the rule: {e}")
-        
+
     def _get_filter_matches(self, query):
         try:
             scroll_id = None
@@ -117,12 +102,20 @@ class Rule(BaseRule):
 
     def validate_ref_values(self):
         pass
+        # for key, value in self.filter1.items():
+        #     if not isinstance(value, str):
+        #         raise ValueError(f"Filter1 {key} must be a string")
+        
+        # for key, value in self.filter2.items():
+        #     if not isinstance(value, str):
+        #         raise ValueError(f"Filter2 {key} must be a string")
 
     def _extract_matched_value(self, row, filter_field_values):
         matched_values = []
         for field in filter_field_values:
             if field.exp_flag:
                 # print(field.name, field.search_agg_exp)
+                # print(row[field.name])
                 match = re.findall(field.search_agg_exp, row[field.name])
                 # print(f'match: {match}')
                 if len(match):
@@ -136,76 +129,48 @@ class Rule(BaseRule):
         matched_values.sort()
         # print(" | ".join(matched_values))
         return " | ".join(matched_values)
-    
-    def _get_other_leg(self, row):
-        frmtted_fetch_val_date = self._format_date(row['fetched_val_date'])
-        query = {
-            "query": {
-                "bool": {
-                    "must": [
-                        {"term": {"RELATIONSHIP_ID": row['RELATIONSHIP_ID']}},
-                        {"term": {"VALUE_DATE": frmtted_fetch_val_date}}
-                    ],
-                    "must_not": [
-                        {"term": {"ITEM_ID": row['ITEM_ID']}}
-                    ]
-                }
-            },
-            "_source": selected_fields
-        }
-        es = es_connect()
-        res = es.search(index=matched_data_index, body=query)
-        hits = res["hits"]["hits"]
-        if len(hits) > 0:
-            return hits[0]["_source"]
-        return None
-    
+
     def find_matches(self):
         queries = {
             "filter1": None,
-            # "filter2": None,
+            "filter2": None,
         }
         queries['filter1'] = self._filter_query_formatter(self.filter1_params, 1)
-        # queries['filter2'] = self._filter_query_formatter(self.filter2_params, 2)
+        queries['filter2'] = self._filter_query_formatter(self.filter2_params, 2)
 
         filter1_matches = self._get_filter_matches(queries['filter1'])
-        # filter2_matches = self._get_filter_matches(queries['filter2'])
+        filter2_matches = self._get_filter_matches(queries['filter2'])
 
         print(f'# filter-1 matches: {len(filter1_matches)}')
-        # print(f'# filter-2 matches: {len(filter2_matches)}')
-        if not len(filter1_matches):
-            print('Matches not found for the provided value date case')
+        print(f'# filter-2 matches: {len(filter2_matches)}')
+
+        if not (len(filter1_matches) and len(filter2_matches)):
+            print('Matches not found for at least one of the filters')
             return pd.DataFrame(columns=selected_fields)
         else:
+            filter1_matches['Filter'] = 'Filter-1'
+            filter2_matches['Filter'] = 'Filter-2'
+
             value_date_flag = self.rule_params.value_date
             exp_flag = self._exp_flag_check()
 
-            filter1_matches['fetched_val_date'] = filter1_matches.apply(
-                lambda row: self._extract_matched_value(row, self.filter1_params['fields']), axis=1)
+            if exp_flag:
+                filter1_matches['concat_matched_value'] = filter1_matches.apply(lambda row: self._extract_matched_value(row, self.filter1_params['fields']), axis=1)
+                filter2_matches['concat_matched_value'] = filter2_matches.apply(lambda row: self._extract_matched_value(row, self.filter2_params['fields']), axis=1)
+            else:
+                filter1_matches['concat_matched_value'] = ''
+                filter2_matches['concat_matched_value'] = ''
 
-            other_legs = []
-            for _, row in filter1_matches.iterrows():
-                try:
-                    other_leg = self._get_other_leg(row)
-                    if other_leg:
-                        df_otl = pd.DataFrame([other_leg])
-                        other_legs.append(df_otl)
-                except:
-                    pass
+            matches_df = pd.concat([filter1_matches, filter2_matches]).drop_duplicates(subset='ITEM_ID', keep='first').reset_index(drop=True)
 
-            del filter1_matches['fetched_val_date']
-            filter2_matches = pd.concat(other_legs).drop_duplicates().reset_index(drop=True)
-
-            matches_df = pd.concat([filter1_matches, filter2_matches]).drop_duplicates().reset_index(drop=True)
-
-            matches_df['AMOUNT'] = matches_df['AMOUNT'].apply(lambda x: float(str(x).replace(',', '')) if isinstance(x, str) else x)
-            matches_df['CONVERTED_AMT'] = matches_df.apply(lambda x: float(x['AMOUNT']) if 'DR' in x['C_OR_D'] else -float(x['AMOUNT']), axis=1)
-
-            result = matches_df.groupby(['RELATIONSHIP_ID'])['CONVERTED_AMT'].sum().reset_index()
-            dist_rel_ids = result[result['CONVERTED_AMT'] == 0]['RELATIONSHIP_ID'].tolist()
+            if self.rule_params.amount_check_flags:
+                for amount_field_flag, amount_flag_value in self.rule_params.amount_check_flags.items():
+                    matches_df = matches_df.groupby(['RELATIONSHIP_ID', 'concat_matched_value']).filter(
+                        lambda group: self.check_amount_flag_condition(amount_check_mapping[amount_field_flag], amount_flag_value, group)
+                    )
 
             # matched_rels = [rel_id for rel_id in dist_rel_ids if rel_id not in matched_rels_all]
-            matches_df = matches_df[matches_df['RELATIONSHIP_ID'].isin(dist_rel_ids)].sort_values(by=['RELATIONSHIP_ID']).reset_index(drop=True)
+            # matches_df = matches_df[matches_df['RELATIONSHIP_ID'].isin(dist_rel_ids)].sort_values(by=['RELATIONSHIP_ID']).reset_index(drop=True)
 
             # if len(matches_df):
             #     matches_df['VALUE_DATE'] = pd.to_datetime(matches_df['VALUE_DATE'])
@@ -215,7 +180,7 @@ class Rule(BaseRule):
             #         matches_df = matches_df.groupby('RELATIONSHIP_ID').filter(lambda x: x['VALUE_DATE'].nunique() > 1).reset_index(drop=True)
 
             matches_df['Rule_Id'] = self.rule_params.unique_rule_id
-            matches_df.drop(['CONVERTED_AMT'], axis=1, inplace=True)
+            # matches_df.drop(['CONVERTED_AMT'], axis=1, inplace=True)
 
             # matched_rels_all += matched_rels
             # rule_matches.append(matches_df)

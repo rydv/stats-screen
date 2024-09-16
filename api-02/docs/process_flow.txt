@@ -1,0 +1,44 @@
+Lets start with the new flow to process rules.
+
+GENERAL FLOW
+- Loads rules from a csv file
+
+Example rule
+unique_rule_id,category_code,set_id,or_and_flag,value_date_flag,amount_flag,ls_flag,dc_flag,ref1,ref2,ref3,ref4
+SG\2021\NOS\MAT-0015,SINGAPORE,ALL,AND,No,Same,L,A,,|EXACT|FX|EXP|(\d{9}),,
+SG\2021\NOS\MAT-0015,SINGAPORE,ALL,AND,No,Same,L,A,,,|EXACT|FX|EXP|(\d{9}),
+
+Each rule will have 
+id : unique_rule_id
+filter_fields: category_code,set_id,
+flag_fields: or_and_flag,value_date_flag,amount_flag,ls_flag,dc_flag,
+value_fields: ref1,ref2,ref3,ref4,string1,string2, ... so on
+
+value_fields contain the definition of operation that needs to be performed on the value of the transaction for given field.
+It follows our custom made structure for each type of strategy operation we wants to perfrom.
+
+User can define multiple rows(filters) per rule(1 to n). Our flow parses each filter and applies the operation on the value of the transaction 
+and checks if there are transactions from relationship groups that matches each filter. If we transactions for each filter means that relation group matches the rule.
+
+DETAILED LOGICAL FLOW:
+
+process.py : Entry point for processing rules.
+1. Loads rules from a csv file
+2. We will intiate a ruleBuilder class to build a rule object.
+2. Iterate through each row, 
+    - Checks if it is a first row of the rule? We can check this by comparing unique_rule_id with ruleBuilder.unique_rule_id.
+        - If ruleBuilder.unique_rule_id is None or not matches, we can assume that it is the first row of the rule.
+        - If first row and If ruleBuilder.unique_rule_id is not None, means all the filters from previous rule are appended, we need to build the rule.
+        - Build the rule using ruleBuilder.build() and then reset ruleBuilder and append it to the ruleBuilder.rules list.
+    - If it is not the first row, we can assume that it is a filter of the rule. We will keep appending it
+
+    - Lets discuss what needs to be done for each filter.
+        rule_params = RuleParams(**row)
+        rule_builder.set_params(rule_params)
+        
+        fields = [Field(col_mapping[col], col, row[col]) for col in reffields]
+        rule_builder.add_filter(fields)
+
+        if row['is_last_filter']:  # Assuming we have a flag to indicate the last filter of a rule
+            rules.append(rule_builder.build())
+            rule_builder.reset()

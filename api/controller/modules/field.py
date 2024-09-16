@@ -138,7 +138,12 @@ class FRMTStrategy(ExpressionStrategy):
 
 class OpStrategy(ExpressionStrategy):
     def parse(self, content: str):
-        return {'op_details': content.strip()}
+        parts = content.strip().split('|')
+        return {
+            'op_type': parts[0],
+            's1': parts[1],
+            's2': parts[2] if len(parts) > 2 else ''
+        }
 
 class PerfRefStrategy(ExpressionStrategy):
     def parse(self, content: str):

@@ -1,0 +1,18 @@
+Common rule definition:
+
+Example rule
+unique_rule_id,category_code,set_id,or_and_flag,value_date_flag,amount_flag,ls_flag,dc_flag,ref1,ref2,ref3,ref4
+SG\2021\NOS\MAT-0015,SINGAPORE,ALL,AND,No,Same,L,A,,|EXACT|FX|EXP|(\d{9}),,
+SG\2021\NOS\MAT-0015,SINGAPORE,ALL,AND,No,Same,L,A,,,|EXACT|FX|EXP|(\d{9}),
+
+Each rule will have 
+id : unique_rule_id
+filter_fields: category_code,set_id,
+flag_fields: or_and_flag,value_date_flag,amount_flag,ls_flag,dc_flag,
+value_fields: ref1,ref2,ref3,ref4,string1,string2, ... so on
+
+value_fields contain the definition of operation that needs to be performed on the value of the transaction for given field.
+It follows our custom made structure for each type of strategy operation we wants to perfrom.
+
+User can define multiple rows(filters) per rule(1 to n). Our flow parses each filter and applies the operation on the value of the transaction 
+and checks if there are transactions from relationship groups that matches each filter. If we transactions for each filter means that relation group matches the rule.

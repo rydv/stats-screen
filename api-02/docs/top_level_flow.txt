@@ -1,0 +1,18 @@
+- Loads rule to memory
+- Iterate through each row.
+- Build rule using ruleBuilder class
+    - Each row is a filter, will parsed and appended to the ruleBuilder filter list
+    - ruleParams class will be used to store common rule params and flag values
+    - Field class is used to parse ref fields.
+    - Once parsed filter is appended to the ruleBuilder filter list
+- After appending all the filters, ruleBuilder will build the rule and append it to the rules list
+- ruleBuilder.build()
+    - Iterate through fields of each filter,
+    - Generate a mapping for operation/Strategy type, params, filter number etc. 
+    (Since operation/Strategy in one filter is related to operation in another filter that is why we are creating a mapping)
+    Example: For expression rule: the pattern for a ref field suppose extracts a value, and corresponding operation in another filter extracts a value too. Those needs to be compared.
+    Operation structure will contain and id and structure, we can use that to create a mapping.
+    - After generating mapping, proper mapping for each operation type will be created. 
+    - We iterate through mapping list and create corresponding operation/strategy object (Expression, perfRef, ValueDate etc)
+    - We will validate by calling strategy.validate_strategy(), which will check it app params and requirements for the strategy is provided in the rule
+    - After validation append rule in the list
