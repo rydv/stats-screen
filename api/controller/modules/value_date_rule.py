@@ -160,6 +160,14 @@ class Rule(BaseRule):
             return hits[0]["_source"]
         return None
     
+    def _format_date(self, date_string):
+        try:
+            date_format = self._get_date_frmt()
+            date_obj = datetime.strptime(date_string, date_format)
+            return date_obj.strftime('%Y-%m-%d')
+        except ValueError:
+            return date_string
+    
     def find_matches(self):
         queries = {
             "filter1": None,

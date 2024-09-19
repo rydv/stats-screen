@@ -1,0 +1,18 @@
+great, moving forward, we will create a mapping for each operation, basically we will map the same id operations so that we can instantiate the respective strategy, 
+we need to iterate through filters and their all ref fields, 
+if id is not present in the mapping, 
+- we will create a key, identify strategy type using the flags, create an entry for that field
+{
+'<id>': {
+'op_type': 'expression_st',
+'filters': {
+    'filter-1': {
+        'ls_flag': <that filter ls flag>,
+        'dc_flag': <that filter dc flag>
+        'fields': [field1, ... so on]},
+    'filter-2': {}
+} }
+}
+
+if id is none, we generate a custom id, and all none ids for that particular op_type will come under same this custom id,
+In this way will create a mapping

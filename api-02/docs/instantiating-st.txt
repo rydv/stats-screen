@@ -1,0 +1,2 @@
+in the rule.py , use op_mapping for each id its respective strategy will be instantiated by passing its mapping details to the startegy and validated,
+now lets start with creating strategy class for expression, use the logic defined in expression_rule.py , instead of two filters, now we have filters in mapping, remember here in the mapping only one expression strategy details will be present(its own)
