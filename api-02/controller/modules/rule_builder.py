@@ -42,10 +42,10 @@ class RuleBuilder:
                         self._op_mapping[op_id]['filters'][filter_key] = {
                             'ls_flag': filter.l_s,
                             'dc_flag': filter.d_c,
-                            'fields': []
+                            'op_items': []
                         }
                     
-                    self._op_mapping[op_id]['filters'][filter_key]['fields'].append(field)
+                    self._op_mapping[op_id]['filters'][filter_key]['op_items'].append(operation)
 
     def _find_or_create_custom_id(self, op_type):
         for existing_id, op_info in self._op_mapping.items():

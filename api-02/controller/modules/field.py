@@ -25,6 +25,8 @@ class Field:
     def _parse_single_operation(self, op_string):
         op_info = {
             'id': None,
+            'field_name': self.name,
+            'field_alias': self.alias,
             'exp_flag': False,
             'valdt_flag': False,
             'op_flag': False,

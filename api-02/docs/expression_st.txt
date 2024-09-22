@@ -1,0 +1,76 @@
+now lets work upon our first strategy implementation for expression rule expression_rule.py, the logical flow will be same, below are the updates
+Base class for all strategy is base_strategy.py, the base_strategy.py will have the following attributes:
+    - rule_params
+    - op_filters
+    - strategy_id
+
+- instead of two filters, now we have an attribute called op_filters, below will be the structure
+
+{
+    'filter-1': {
+        'ls_flag': 'L',
+        'dc_flag': 'A',
+        'op_items': [
+            {
+                'id': None,
+                'field_name': 'SFIELD_8',
+                'field_alias': 'ref2'
+                'exp_flag': True,
+                'split_values': [
+                    {'exact': 'FX'},
+                    {'exp': '(\d{9})'}
+                ],
+                'search_agg_exp': 'FX(\d{9})'
+                # other flags and params would be set to their default values
+            }
+        ]
+    },
+    'filter-2': {
+        'ls_flag': 'L',
+        'dc_flag': 'A',
+        'op_items': [
+            {
+                'id': None,
+                'field_name': 'SFIELD_9',
+                'field_alias': 'ref3'
+                'exp_flag': True,
+                'split_values': [
+                    {'exact': 'FX'},
+                    {'exp': '(\d{9})'}
+                ],
+                'search_agg_exp': 'FX(\d{9})'
+                # other flags and params would be set to their default values
+            }
+        ]
+    }
+}
+
+we will iterate through the op_filters and for each filter, we will use op_items to format elastic query using search_agg_exp on field_name under should condition
+atleast 1 should match.
+
+we use rule_params for other rule params to be used in the query.
+
+after formatting the query, we will use the query to fetch the data from elasticsearch.
+we will fetch data for each query and store the data in a list against filter id.
+
+Then we will fetch(extract) the matched value from the matched transactions. example: 
+{
+    ...
+    'SFIELD_8': 'FX123456789',
+    ...
+}
+
+we will fetch value match bracket expression in 'search_agg_exp': 'FX(\d{9})', that i.e. '(\d{9})'
+
+if there are multiple matches, we will fetch all the values and store in a list and assign to that transaction. example
+
+'235563 SCB BANK 354535' -- exp: '(\d{6})' -- matched_values: ['235563','354535']
+
+this way we will fetch matched value for all the matches for all the filters.
+
+Then we will group by transactions on 'RELATIONSHIP_ID' and in each group we need to check for the combinations of transactions that have at least 1 matched value common. 
+In those combinations, if their is at least 1 transaction present from each filter that we will mark that combination as a match as per our strategy.
+We will assign each combination in that RELATIONSHIP_ID group with new field 'MATRIX_RELATIONSHIP_ID' using RELATIONSHIP_ID_<sequence_number> of the combination in the relationship group.
+To that combination we willl also add a field 'MATCHED_VALUES' with list of the common values found.
+
+We will perform this for all the relationship groups. And generate a final df of matched transactions and return that df.

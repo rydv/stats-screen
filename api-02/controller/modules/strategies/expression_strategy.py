@@ -1,98 +1,100 @@
-from controllers.matching_matrix_controller.modules.strategies.base_strategy import BaseStrategy
 import re
 import pandas as pd
+from itertools import combinations
+from controllers.matching_matrix_controller.modules.strategies.base_strategy import BaseStrategy
 
 class ExpressionStrategy(BaseStrategy):
-    def __init__(self, rule_params, op_mapping, strategy_id):
-        super().__init__(rule_params, op_mapping, strategy_id)
-        self.expression_ops = self._create_expression_operations()
-
-    def _create_expression_operations(self):
-        expression_ops = []
-        for op in self.op_mapping:
-            if op['op_type'] == '|EXP|':
-                expression_ops.append(ExpressionOperation(op['field_name'], op['content']))
-        return expression_ops
+    def __init__(self, rule_params, op_filters, strategy_id):
+        super().__init__(rule_params, op_filters, strategy_id)
 
     def validate_strategy(self):
-        for op in self.expression_ops:
-            if not op.validate():
-                raise ValueError(f"Invalid regular expression for field {op.field_name}")
+        # Implement validation logic if needed
+        pass
 
-    def build_query(self):
+    def build_query(self, filter_data):
         query = {
             "query": {
                 "bool": {
-                    "filter": [
+                    "must": [
                         {"term": {"COUNTRY": self.rule_params.category_code}}
-                    ]
+                    ],
+                    "should": [],
+                    "minimum_should_match": 1
                 }
             }
         }
 
         if self.rule_params.set_id != 'ALL':
-            query["query"]["bool"]["filter"].append({"terms": {"LOCAL_ACC_NO": self.rule_params.set_id}})
+            query["query"]["bool"]["must"].append({"terms": {"LOCAL_ACC_NO": self.rule_params.set_id}})
 
-        if self.rule_params.d_c != 'A':
-            tran_type = [f"{self.rule_params.l_s} {self.rule_params.d_c}R"]
-        else:
-            tran_type = [f"{self.rule_params.l_s} CR", f"{self.rule_params.l_s} DR"]
-        
-        query["query"]["bool"]["filter"].append({"terms": {"C_OR_D": tran_type}})
+        tran_type = [f"{filter_data['ls_flag']} {filter_data['dc_flag']}R"] if filter_data['dc_flag'] != 'A' else [f"{filter_data['ls_flag']} CR", f"{filter_data['ls_flag']} DR"]
+        query["query"]["bool"]["must"].append({"terms": {"C_OR_D": tran_type}})
+
+        for op_item in filter_data['op_items']:
+            query["query"]["bool"]["should"].append({"regexp": {op_item['field_name']: op_item['search_agg_exp']}})
 
         return query
 
     def process_matches(self, matches):
-        df = pd.DataFrame(matches)
-        df['concat_matched_value'] = df.apply(self._extract_matched_value, axis=1)
-        df['Rule_Id'] = self.rule_params.unique_rule_id
-        return df
-
-    def _extract_matched_value(self, row):
-        matched_values = []
-        for op in self.expression_ops:
-            match = op.apply(row)
-            if match:
-                if isinstance(match[0], tuple):
-                    matched_values.extend(list(match[0]))
-                else:
-                    matched_values.append(match[0])
-        matched_values.sort()
-        return " | ".join(matched_values)
+        processed_matches = []
+        for match in matches:
+            processed_match = match.copy()
+            matched_values_list = []
+            for filter_id, filter_data in self.op_filters.items():
+                for op_item in filter_data['op_items']:
+                    field_value = match.get(op_item['field_name'], '')
+                    matched_values = re.findall(op_item['search_agg_exp'], field_value)
+                    matched_values_list.extend(matched_values)
+            processed_match['matched_value'] = list(set(matched_values_list))
+            processed_matches.append(processed_match)
+        return processed_matches
 
     def find_matches(self):
-        query = self.build_query()
         all_matches = []
-        scroll_id = None
+        for filter_id, filter_data in self.op_filters.items():
+            query = self.build_query(filter_data)
+            scroll_id = None
+            while True:
+                scroll_id, hits = self.scroll_transactions(query, scroll_id)
+                if not hits:
+                    break
+                processed_matches = self.process_matches([hit['_source'] for hit in hits])
+                for match in processed_matches:
+                    match['filter_id'] = filter_id
+                all_matches.extend(processed_matches)
 
-        while True:
-            scroll_id, transactions = self.scroll_transactions(query, scroll_id)
-            if not transactions:
-                break
-            all_matches.extend(transactions)
+        df = pd.DataFrame(all_matches)
+        grouped = df.groupby('RELATIONSHIP_ID')
+        
+        final_matches = []
+        for rel_id, group in grouped:
+            if len(group) <= 20:
+                combinations_list = list(combinations(group.index, len(self.op_filters)))
+                for i, combo in enumerate(combinations_list):
+                    combo_df = group.loc[combo]
+                    filter_ids = set(combo['filter_id'])
+                    if len(filter_ids) == len(self.op_filters):
+                        common_values = set.intersection(*[set(v) for v in combo_df['matched_value'].values if v])
+                        if common_values:
+                            for _, row in combo_df.iterrows():
+                                match = row.to_dict()
+                                match['MATRIX_RELATIONSHIP_ID'] = f"{rel_id}_{i+1}"
+                                match['MATCHED_VALUES'] = list(common_values)
+                                final_matches.append(match)
+            elif self.check_for_sam_amount_flags():
+                sorted_group = group.sort_values('AMOUNT')
+                amount_groups = sorted_group.groupby('AMOUNT')
+                for amount, amount_group in amount_groups:
+                    filter_ids = set(amount_group['filter_id'])
+                    if len(filter_ids) == len(self.op_filters):
+                        common_values = set.intersection(*[set(v) for v in amount_group['matched_value'].values if v])
+                        if common_values:
+                            for _, row in amount_group.iterrows():
+                                match = row.to_dict()
+                                match['MATRIX_RELATIONSHIP_ID'] = f"{rel_id}_{amount}"
+                                match['MATCHED_VALUES'] = list(common_values)
+                                final_matches.append(match)
+            else:
+                pass
 
-        matches_df = self.process_matches(all_matches)
-
-        if self.rule_params.amount_check_flags:
-            for amount_field_flag, amount_flag_value in self.rule_params.amount_check_flags.items():
-                matches_df = matches_df.groupby(['RELATIONSHIP_ID', 'concat_matched_value']).filter(
-                    lambda group: self.check_amount_flag_condition(amount_check_mapping[amount_field_flag], amount_flag_value, group)
-                )
-
-        print(f'Matches for {self.rule_params.unique_rule_id}: {len(matches_df)}')
-        return matches_df
-
-class ExpressionOperation:
-    def __init__(self, field_name, content):
-        self.field_name = field_name
-        self.pattern = content
-
-    def validate(self):
-        try:
-            re.compile(self.pattern)
-            return True
-        except re.error:
-            return False
-
-    def apply(self, data):
-        return re.findall(self.pattern, data[self.field_name])
+        return pd.DataFrame(final_matches)
