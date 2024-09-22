@@ -54,6 +54,7 @@ class ExpressionStrategy(BaseStrategy):
         for filter_id, filter_data in self.op_filters.items():
             query = self.build_query(filter_data)
             scroll_id = None
+            filter_matches = []
             while True:
                 scroll_id, hits = self.scroll_transactions(query, scroll_id)
                 if not hits:
@@ -61,7 +62,12 @@ class ExpressionStrategy(BaseStrategy):
                 processed_matches = self.process_matches([hit['_source'] for hit in hits])
                 for match in processed_matches:
                     match['filter_id'] = filter_id
-                all_matches.extend(processed_matches)
+                filter_matches.extend(processed_matches)
+                if not filter_matches:
+                    print(f"No matches found for filter ID: {filter_id}")
+                    return pd.DataFrame()  # Return empty DataFrame if no matches for a filter
+            all_matches.extend(filter_matches)
+            print(f"Count for filter {filter_id}: {len(filter_matches)}")
 
         df = pd.DataFrame(all_matches)
         grouped = df.groupby('RELATIONSHIP_ID')
