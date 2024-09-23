@@ -49,6 +49,9 @@ class ExpressionStrategy(BaseStrategy):
             processed_matches.append(processed_match)
         return processed_matches
 
+    def _get_combinations(self, group_index):
+        return [combo for i in range(2, len(group_index) + 1) for combo in combinations(group_index, i)]
+
     def find_matches(self):
         all_matches = []
         for filter_id, filter_data in self.op_filters.items():
@@ -78,7 +81,7 @@ class ExpressionStrategy(BaseStrategy):
             group = group.drop_duplicates(subset='ITEM_ID')
             
             if len(group) <= 20:
-                combinations_list = list(combinations(group.index, len(self.op_filters)))
+                combinations_list = self._get_combinations(group.index)
                 for i, combo in enumerate(combinations_list):
                     combo_df = group.loc[combo]
                     filter_ids = set(combo_df['filter_id'])

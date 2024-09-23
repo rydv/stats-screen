@@ -35,6 +35,7 @@ class PerfRefStrategy(BaseStrategy):
 
         return query
 
+
     def find_matches(self):
         all_matches = []
         for filter_id, filter_data in self.op_filters.items():
