@@ -74,11 +74,14 @@ class ExpressionStrategy(BaseStrategy):
         
         final_matches = []
         for rel_id, group in grouped:
+            # Remove duplicate entries based on ITEM_ID
+            group = group.drop_duplicates(subset='ITEM_ID')
+            
             if len(group) <= 20:
                 combinations_list = list(combinations(group.index, len(self.op_filters)))
                 for i, combo in enumerate(combinations_list):
                     combo_df = group.loc[combo]
-                    filter_ids = set(combo['filter_id'])
+                    filter_ids = set(combo_df['filter_id'])
                     if len(filter_ids) == len(self.op_filters):
                         common_values = set.intersection(*[set(v) for v in combo_df['matched_value'].values if v])
                         if common_values:
