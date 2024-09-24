@@ -17,9 +17,7 @@ class PerfRefStrategy(BaseStrategy):
                 "bool": {
                     "must": [
                         {"term": {"COUNTRY": self.rule_params.category_code}}
-                    ],
-                    "should": [],
-                    "minimum_should_match": 1
+                    ]
                 }
             }
         }
@@ -30,11 +28,13 @@ class PerfRefStrategy(BaseStrategy):
         tran_type = [f"{filter_data['ls_flag']} {filter_data['dc_flag']}R"] if filter_data['dc_flag'] != 'A' else [f"{filter_data['ls_flag']} CR", f"{filter_data['ls_flag']} DR"]
         query["query"]["bool"]["must"].append({"terms": {"C_OR_D": tran_type}})
 
-        for op_item in filter_data['op_items']:
-            query["query"]["bool"]["should"].append({"regexp": {op_item['field_name']: op_item['search_agg_exp']}})
+        if filter_data['op_items']:
+            query["query"]["bool"]["should"] = []
+            query["query"]["bool"]["minimum_should_match"] = 1
+            for op_item in filter_data['op_items']:
+                query["query"]["bool"]["should"].append({"regexp": {op_item['field_name']: op_item['search_agg_exp']}})
 
         return query
-
 
     def find_matches(self):
         all_matches = []
