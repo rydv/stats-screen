@@ -148,7 +148,7 @@ class PerfRefStrategy(BaseStrategy):
             return length == exact_length
         return min_length <= length <= max_length
 
-    def _find_top_5_common_substrings(self, strings, params):
+    def _find_top_5_common_substrings(self, strings, params, exp=None):
         if not strings:
             return []
 
@@ -156,7 +156,11 @@ class PerfRefStrategy(BaseStrategy):
         for s in strings[1:]:
             common_substrings &= set(self._get_substrings(s, params))
 
-        return sorted(list(common_substrings), key=len, reverse=True)[:5]
+        if exp is not None:
+            matching_substrings = [substr for substr in common_substrings if re.search(exp, substr)]
+            return sorted(matching_substrings, key=len, reverse=True)[:5]
+        else:
+            return sorted(list(common_substrings), key=len, reverse=True)[:5]
 
     def _get_substrings(self, s, params):
         min_len = int(params.get('min_length', 5)) if params.get('min_length') is not None else 5
