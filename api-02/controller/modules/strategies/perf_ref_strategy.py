@@ -103,16 +103,16 @@ class PerfRefStrategy(BaseStrategy):
 
         op_info=self.op_filters[group[0]['filter-1']]['op_items'][0]
 
-        for transaction in group:
-            filter_id = transaction['filter_id']
-            filter_details = self.op_filters[filter_id]
-            
-            concated_values = '|'.join(
+        def join_concated_values(transaction, op_filters):
+            filter_id = transaction.get('filter_id')
+            if filter_id not in op_filters:
+                return ''
+            return '|'.join(
                 transaction.get(op_item['field_name'], '')
-                for op_item in filter_details['op_items']
+                for op_item in op_filters[filter_id]['op_items']
             )
-            
-            transaction['concated_values'] = concated_values
+
+        group['concated_values'] = group.apply(lambda transaction: join_concated_values(transaction, self.op_filters), axis=1)
 
         # for field_id, field_info in self.filter_mapping.items():
         all_concated_values = [t['concated_values'] for t in group]
@@ -159,11 +159,11 @@ class PerfRefStrategy(BaseStrategy):
         return sorted(list(common_substrings), key=len, reverse=True)[:5]
 
     def _get_substrings(self, s, params):
-        min_len = params.get('min_length', 5)
-        max_len = params.get('max_length', 15)
-        exact_len = params.get('exact_length')
+        min_len = int(params.get('min_length', 5)) if params.get('min_length') is not None else 5
+        max_len = int(params.get('max_length', 15)) if params.get('max_length') is not None else None
+        exact_len = int(params.get('exact_length')) if params.get('exact_length') is not None else None
 
         if exact_len:
             return [s[i:i+exact_len] for i in range(len(s)-exact_len+1) if '|' not in s[i:i+exact_len]]
         else:
-            return [s[i:j] for i in range(len(s)) for j in range(i + min_len, min(i + max_len + 1, len(s) + 1)) if '|' not in s[i:j]]
+            return [s[i:j] for i in range(len(s)) for j in range(i + min_len, len(s) + 1) if '|' not in s[i:j] and (max_len is None or j - i <= max_len)]
