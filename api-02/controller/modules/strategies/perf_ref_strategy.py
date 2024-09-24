@@ -70,7 +70,7 @@ class PerfRefStrategy(BaseStrategy):
                     continue
                 
                 # Find common patterns
-                common_patterns = self.find_common_patterns(combo_df)
+                common_patterns = self._process_relationship_group(combo_df.to_dict('records'))
                 if common_patterns:
                     for _, row in combo_df.iterrows():
                         match = row.to_dict()
@@ -98,6 +98,70 @@ class PerfRefStrategy(BaseStrategy):
         # Implement the amount flag condition check logic here
         pass
 
-    def find_common_patterns(self, df):
-        # Implement the logic to find common patterns across the fields
-        pass
+    def _process_relationship_group(self, relationship_group):
+        matches = {}
+
+        for transaction in relationship_group:
+            filter_id = transaction['filter_id']
+            filter_details = self.op_filters[filter_id]
+            
+            concated_values = '|'.join(
+                transaction.get(op_item['field_name'], '')
+                for op_item in filter_details['op_items']
+            )
+            
+            transaction['concated_values'] = concated_values
+
+        for field_id, field_info in self.filter_mapping.items():
+            all_concated_values = [t['concated_values'] for t in relationship_group]
+            common_substrings = self._find_top_5_common_substrings(all_concated_values, field_info['params'])
+            
+            valid_substrings = [
+                substr for substr in common_substrings 
+                if '|' not in substr and 
+                self._check_substring_length(substr, field_info['params'])
+            ]
+
+            if valid_substrings:
+                search_agg_exp = field_info.get('search_agg_exp', '')
+                if search_agg_exp:
+                    matching_substrings = [
+                        substr for substr in valid_substrings 
+                        if re.search(search_agg_exp, substr)
+                    ]
+                    if matching_substrings:
+                        matches[field_id] = matching_substrings
+                else:
+                    matches[field_id] = valid_substrings
+
+        return matches
+
+    def _check_substring_length(self, substring, params):
+        length = len(substring)
+        min_length = params.get('min_length', 5)
+        max_length = params.get('max_length', 15)
+        exact_length = params.get('exact_length')
+        
+        if exact_length:
+            return length == exact_length
+        return min_length <= length <= max_length
+
+    def _find_top_5_common_substrings(self, strings, params):
+        if not strings:
+            return []
+
+        common_substrings = set(self._get_substrings(strings[0], params))
+        for s in strings[1:]:
+            common_substrings &= set(self._get_substrings(s, params))
+
+        return sorted(list(common_substrings), key=len, reverse=True)[:5]
+
+    def _get_substrings(self, s, params):
+        min_len = params.get('min_length', 5)
+        max_len = params.get('max_length', 15)
+        exact_len = params.get('exact_length')
+
+        if exact_len:
+            return [s[i:i+exact_len] for i in range(len(s)-exact_len+1) if '|' not in s[i:i+exact_len]]
+        else:
+            return [s[i:j] for i in range(len(s)) for j in range(i + min_len, min(i + max_len + 1, len(s) + 1)) if '|' not in s[i:j]]
