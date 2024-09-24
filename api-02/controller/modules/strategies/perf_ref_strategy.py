@@ -158,9 +158,18 @@ class PerfRefStrategy(BaseStrategy):
 
         if exp is not None:
             matching_substrings = [substr for substr in common_substrings if re.search(exp, substr)]
-            return sorted(matching_substrings, key=len, reverse=True)[:5]
+            sorted_substrings = sorted(matching_substrings, key=len, reverse=True)
         else:
-            return sorted(list(common_substrings), key=len, reverse=True)[:5]
+            sorted_substrings = sorted(list(common_substrings), key=len, reverse=True)
+
+        result = []
+        for substr in sorted_substrings:
+            if not any(substr in s for s in result):
+                result.append(substr)
+                if len(result) == 5:
+                    break
+
+        return result
 
     def _get_substrings(self, s, params):
         min_len = int(params.get('min_length', 5)) if params.get('min_length') is not None else 5
