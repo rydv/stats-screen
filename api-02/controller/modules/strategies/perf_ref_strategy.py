@@ -157,7 +157,8 @@ class PerfRefStrategy(BaseStrategy):
             common_substrings &= set(self._get_substrings(s, params))
 
         if exp is not None:
-            matching_substrings = [substr for substr in common_substrings if re.search(exp, substr)]
+            matching_substrings = [re.search(exp, substr).group() for substr in common_substrings if re.search(exp, substr)]
+            print(matching_substrings)
             sorted_substrings = sorted(matching_substrings, key=len, reverse=True)
         else:
             sorted_substrings = sorted(list(common_substrings), key=len, reverse=True)
