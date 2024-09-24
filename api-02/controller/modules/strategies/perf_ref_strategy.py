@@ -98,10 +98,12 @@ class PerfRefStrategy(BaseStrategy):
         # Implement the amount flag condition check logic here
         pass
 
-    def _process_relationship_group(self, relationship_group):
-        matches = {}
+    def _process_relationship_group(self, group):
+        matches = []
 
-        for transaction in relationship_group:
+        op_info=self.op_filters[group[0]['filter-1']]['op_items'][0]
+
+        for transaction in group:
             filter_id = transaction['filter_id']
             filter_details = self.op_filters[filter_id]
             
@@ -112,27 +114,27 @@ class PerfRefStrategy(BaseStrategy):
             
             transaction['concated_values'] = concated_values
 
-        for field_id, field_info in self.filter_mapping.items():
-            all_concated_values = [t['concated_values'] for t in relationship_group]
-            common_substrings = self._find_top_5_common_substrings(all_concated_values, field_info['params'])
-            
-            valid_substrings = [
-                substr for substr in common_substrings 
-                if '|' not in substr and 
-                self._check_substring_length(substr, field_info['params'])
-            ]
+        # for field_id, field_info in self.filter_mapping.items():
+        all_concated_values = [t['concated_values'] for t in group]
+        common_substrings = self._find_top_5_common_substrings(all_concated_values, op_info['perf_ref_params'])
+        
+        valid_substrings = [
+            substr for substr in common_substrings 
+            if '|' not in substr and 
+            self._check_substring_length(substr, op_info.get('perf_ref_params', ''))
+        ]
 
-            if valid_substrings:
-                search_agg_exp = field_info.get('search_agg_exp', '')
-                if search_agg_exp:
-                    matching_substrings = [
-                        substr for substr in valid_substrings 
-                        if re.search(search_agg_exp, substr)
-                    ]
-                    if matching_substrings:
-                        matches[field_id] = matching_substrings
-                else:
-                    matches[field_id] = valid_substrings
+        if valid_substrings:
+            search_agg_exp = op_info.get('search_agg_exp', '')
+            if search_agg_exp:
+                matching_substrings = [
+                    substr for substr in valid_substrings 
+                    if re.search(search_agg_exp, substr)
+                ]
+                if matching_substrings:
+                    matches = matching_substrings
+            else:
+                matches = valid_substrings
 
         return matches
 
