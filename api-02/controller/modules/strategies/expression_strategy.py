@@ -44,7 +44,11 @@ class ExpressionStrategy(BaseStrategy):
                 for op_item in filter_data['op_items']:
                     field_value = match.get(op_item['field_name'], '')
                     matched_values = re.findall(op_item['search_agg_exp'], field_value)
-                    matched_values_list.extend(matched_values)
+                    for match in matched_values:
+                        if isinstance(match, tuple):
+                            matched_values_list.extend(match)
+                        else:
+                            matched_values_list.append(match)
             processed_match['matched_value'] = list(set(matched_values_list))
             processed_matches.append(processed_match)
         return processed_matches
