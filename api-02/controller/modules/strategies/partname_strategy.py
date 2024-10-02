@@ -13,7 +13,7 @@ class ClientNameStrategy(BaseStrategy):
         pass
 
     def _get_combinations(self, group_index):
-        return [combo for i in range(2, len(group_index)+1) for combo in combinations(group_index, i)]
+        return list(combinations(group_index, 2))
 
     def _get_matched_values(self, transaction, op_filters):
         matched_values_list = []
