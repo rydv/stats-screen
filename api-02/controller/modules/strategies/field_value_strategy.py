@@ -128,7 +128,8 @@ class FieldValueStrategy(BaseStrategy):
                         out_flag, processed_group = self._process_relationship_group(combined_group)
                         
                         if out_flag:
-                            processed_group["MATRIX_RELATIONSHIP_ID"] = f"{self.rule_params.unique_rule_id}-{relationship_id}-{matched_value}"
+                            sorted_item_ids = '#'.join(sorted(processed_group['ITEM_ID'].astype(str)))
+                            processed_group["MATRIX_RELATIONSHIP_ID"] = f"{self.rule_params.unique_rule_id}-{relationship_id}-{sorted_item_ids}"
                             processed_group["MATCHED_VALUES"] = matched_value
                             matched_transactions.append(processed_group)
                             matched_item_ids_set.update([source_item_id, matched_value])

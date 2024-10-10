@@ -1,4 +1,6 @@
 from typing import List, Dict
+import pandas as pd
+from collections import ChainMap
 from filter import Filter
 from expression_rule import ExpressionStrategy
 from value_date_rule import ValueDateStrategy
@@ -38,8 +40,48 @@ class Rule:
         for strategy in self.strategies.values():
             strategy.validate_strategy()
 
-    def process(self, data):
+    def process_strategies(self):
         results = []
-        for strategy in self.strategies.values():
-            results.extend(strategy.find_matches())
+        for strategy_id, strategy in self.strategies.items():
+            print(f"Processing strategy: {strategy_id}")
+            matches = strategy.find_matches()
+            for match in matches:
+                match['strategy_id'] = strategy_id
+            results.extend(matches)
         return results
+
+    def merge_and_process_results(self, results):
+        df = pd.DataFrame(results)
+        
+        grouped = df.groupby('MATRIX_RELATIONSHIP_ID')
+        
+        all_strategy_ids = set(self.strategies.keys())
+        
+        or_and_flag = self.rule_params.or_and_flag.upper()
+        
+        final_results = []
+        for _, group in grouped:
+            strategy_ids_in_group = set(group['strategy_id'])
+            
+            if or_and_flag == 'AND':
+                if not all_strategy_ids.issubset(strategy_ids_in_group):
+                    continue
+            elif or_and_flag == 'OR' or or_and_flag not in ['AND', 'OR']:
+                if not strategy_ids_in_group:
+                    continue
+            
+            item_groups = group.groupby('ITEM_ID')
+            for _, item_group in item_groups:
+                combined_match = {
+                    'MATRIX_RELATIONSHIP_ID': item_group['MATRIX_RELATIONSHIP_ID'].iloc[0],
+                    'ITEM_ID': item_group['ITEM_ID'].iloc[0],
+                    'MATCHED_VALUE': '|'.join(item_group['MATCHED_VALUE']),
+                    'EXACT_EXP_MATCH': [dict(ChainMap(*eval(m))) for m in item_group['EXACT_EXP_MATCH']]
+                }
+                final_results.append(combined_match)
+        
+        return final_results
+
+    def process(self):
+        results = self.process_strategies()
+        return self.merge_and_process_results(results)

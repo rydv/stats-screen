@@ -83,35 +83,32 @@ class ClientNameStrategy(BaseStrategy):
         df = pd.DataFrame(all_matches)
         grouped = df.groupby('RELATIONSHIP_ID')
         final_matches = []
-        grp_count = 0
         for rel_id, group in grouped:
             group = group.drop_duplicates(subset='ITEM_ID')
-            grp_count += 1
             if len(group) <= 10:
                 combinations_list = self._get_combinations(group.index)
                 matched_item_ids = set()
-                for i, combo in enumerate(combinations_list):
+                for combo in combinations_list:
                     combo_df = group.loc[list(combo)]
                     if any(item_id in matched_item_ids for item_id in combo_df['ITEM_ID']):
                         continue
                     out_flag, matched_group = self._process_relationship_group(combo_df)
                     if out_flag:
-                        matched_group["MATRIX_RELATIONSHIP_ID"] = f"{self.rule_params.unique_rule_id}-{rel_id}-{grp_count}{i+1}"
+                        sorted_item_ids = '#'.join(sorted(matched_group['ITEM_ID'].astype(str)))
+                        matched_group["MATRIX_RELATIONSHIP_ID"] = f"{self.rule_params.unique_rule_id}-{rel_id}-{sorted_item_ids}"
                         final_matches.append(matched_group)
                         matched_item_ids.update(matched_group['ITEM_ID'].tolist())
             elif self.rule_params.amount_check_flags['amount_flag'] == 'S' or self.rule_params.amount_check_flags['amount_flag'] == 'Same':
                 sorted_group = group.sort_values('AMOUNT')
                 amount_groups = sorted_group.groupby('AMOUNT')
-                ag_count = 0
                 for amount, amount_group in amount_groups:
-                    ag_count += 1
                     out_flag, matched_group = self._process_relationship_group(amount_group)
                     if out_flag:
-                        matched_group['MATRIX_RELATIONSHIP_ID'] = f"{self.rule_params.unique_rule_id}-{rel_id}-{grp_count}{ag_count}"
+                        sorted_item_ids = '#'.join(sorted(matched_group['ITEM_ID'].astype(str)))
+                        matched_group['MATRIX_RELATIONSHIP_ID'] = f"{self.rule_params.unique_rule_id}-{rel_id}-{sorted_item_ids}"
                         final_matches.append(matched_group)
             else:
                 pass
-
         final_df = pd.concat(final_matches).reset_index(drop=True)
         if len(final_df):
             final_df["MATCHED_VALUES"] = final_df["MATCHED_VALUES"] + " | " + final_df["PARTNAME"]
