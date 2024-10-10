@@ -45,10 +45,9 @@ class Rule:
         for strategy_id, strategy in self.strategies.items():
             print(f"Processing strategy: {strategy_id}")
             matches = strategy.find_matches()
-            for match in matches:
-                match['strategy_id'] = strategy_id
-            results.extend(matches)
-        return results
+            matches['strategy_id'] = strategy_id
+            results.append(matches)
+        return pd.concat(results, ignore_index=True)
 
     def merge_and_process_results(self, results):
         df = pd.DataFrame(results)
@@ -78,6 +77,10 @@ class Rule:
                     'MATCHED_VALUE': '|'.join(item_group['MATCHED_VALUE']),
                     'EXACT_EXP_MATCH': [dict(ChainMap(*eval(m))) for m in item_group['EXACT_EXP_MATCH']]
                 }
+                # Add other fields from the first row
+                for column in item_group.columns:
+                    if column not in combined_match:
+                        combined_match[column] = item_group[column].iloc[0]
                 final_results.append(combined_match)
         
         return final_results
