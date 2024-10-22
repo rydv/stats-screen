@@ -13,6 +13,7 @@ interface ConfigureReportState {
   instance: string;
   country: string;
   uploadedFile: string | null;
+  enabled: boolean;
 }
 
 class ConfigureReport extends Component<ConfigureReportProps, ConfigureReportState> {
@@ -21,14 +22,22 @@ class ConfigureReport extends Component<ConfigureReportProps, ConfigureReportSta
     instance: '',
     country: '',
     uploadedFile: null,
+    enabled: true,
   };
 
-  handleFeatureChange = (name: string, value: string) => {
-    this.setState({ [name]: value } as Pick<ConfigureReportState, keyof ConfigureReportState>);
+  handleFeatureChange = (name: string, value: string | boolean) => {
+    this.setState(prevState => ({
+      ...prevState,
+      [name]: value
+    }));
   };
 
   handleFileUpload = (fileName: string) => {
     this.setState({ uploadedFile: fileName });
+  };
+
+  handleToggle = () => {
+    this.setState(prevState => ({ enabled: !prevState.enabled }));
   };
 
   handleValidate = () => {
@@ -52,6 +61,7 @@ class ConfigureReport extends Component<ConfigureReportProps, ConfigureReportSta
               country: this.state.country,
               reportName: this.state.reportName,
               uploadedFile: this.state.uploadedFile,
+              enabled: this.state.enabled,
             }
           }
         };
@@ -68,7 +78,19 @@ class ConfigureReport extends Component<ConfigureReportProps, ConfigureReportSta
     return (
       <div className="configure-report">
         <h1>Configure Report</h1>
-        <div className="main-content" style={{ display: 'flex', flexDirection: 'row' }}>
+        <div className="actions">
+        <label className="toggle-switch">
+          <input
+            type="checkbox"
+            checked={this.state.enabled}
+            onChange={this.handleToggle}
+          />
+          <span className="slider"></span>
+        </label>
+          <button onClick={this.handleValidate}>Validate</button>
+          <button onClick={this.handleSubmit}>Submit</button>
+        </div>
+        <div className="main-content">
           <FeaturesForm
             reportName={this.state.reportName}
             instance={this.state.instance}
@@ -79,10 +101,6 @@ class ConfigureReport extends Component<ConfigureReportProps, ConfigureReportSta
             uploadedFile={this.state.uploadedFile}
             onFileUpload={this.handleFileUpload}
           />
-        </div>
-        <div className="actions">
-          <button onClick={this.handleValidate}>Validate</button>
-          <button onClick={this.handleSubmit}>Submit</button>
         </div>
       </div>
     );

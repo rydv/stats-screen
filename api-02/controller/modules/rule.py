@@ -83,8 +83,11 @@ class Rule:
                         combined_match[column] = item_group[column].iloc[0]
                 final_results.append(combined_match)
         
-        return final_results
-
+        final_df = pd.DataFrame(final_results)
+        if 'strategy_id' in final_df.columns:
+            final_df = final_df.drop(columns=['strategy_id'])
+        return final_df
+    
     def process(self):
         results = self.process_strategies()
         return self.merge_and_process_results(results)

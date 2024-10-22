@@ -1,0 +1,18 @@
+As scaling wouldnt be a big issue, lets keep data in elastic index itself, the ideas I like are 
+
+- rule sheet versioning, 
+- I am not going with message queue system for now though I liked the idea but we will keep a scheduling script, before start processing which will take look for active pids(I have a template script which I will provide when we will start working on the scheduling script. We will keep our scheduling logic well separated so that if required in future will put queue system and have worker processes consume from this queue to process reports
+- I liked Report Frequency idea, we will keep a field, its default value will be set to 'daily'
+- Granular Run Summary: In reports_run_index, break down runSummary into fields:
+totalTransactionsProcessed
+matchedTransactionsCount
+unmatchedTransactionsCount
+ruleWiseMatchCounts (JSON field with rule IDs and their match counts)
+- Archiving Strategy: Implement an archiving strategy for old report runs:
+We will clear 10 days older records and corresponding stored output reports
+- Monitoring & alerts
+Track system health (CPU, memory, disk usage)
+Set up alerts for failed runs or system issues
+
+we will keep these points in mind while building logic further, but before that we will complete our configure report logic
+

@@ -13,7 +13,10 @@ class Field:
             return []
 
         operations = []
-        operation_strings = self.value.split('||')
+        operation_strings = re.findall(r'(?:\|?ID\|\d+\|).*?(?=(?:\|?ID\|\d+\||$))', self.value, re.DOTALL)
+
+        if not operation_strings:
+            operation_strings = [self.value]
 
         for op_string in operation_strings:
             op_info = self._parse_single_operation(op_string)
