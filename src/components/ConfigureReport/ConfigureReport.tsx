@@ -79,14 +79,16 @@ class ConfigureReport extends Component<ConfigureReportProps, ConfigureReportSta
       <div className="configure-report">
         <h1>Configure Report</h1>
         <div className="actions">
-        <label className="toggle-switch">
-          <input
-            type="checkbox"
-            checked={this.state.enabled}
-            onChange={this.handleToggle}
-          />
-          <span className="slider"></span>
-        </label>
+          <label className="toggle-switch">
+            <input
+              type="checkbox"
+              checked={this.state.enabled}
+              onChange={this.handleToggle}
+            />
+            <span className="slider">
+              <span className="toggle-text">{this.state.enabled ? 'Enabled' : 'Disabled'}</span>
+            </span>
+          </label>
           <button onClick={this.handleValidate}>Validate</button>
           <button onClick={this.handleSubmit}>Submit</button>
         </div>

@@ -37,8 +37,9 @@
 .toggle-switch {
   position: relative;
   display: inline-block;
-  width: 40px;
+  width: 70px;
   height: 24px;
+  margin-right: 10px;
 }
 
 .toggle-switch input {
@@ -76,5 +77,25 @@ input:checked + .slider {
 }
 
 input:checked + .slider:before {
-  transform: translateX(16px);
+  transform: translateX(46px);
+}
+
+.toggle-text {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 100%;
+  text-align: center;
+  color: white;
+  font-size: 9px;
+  font-weight: bold;
+  transition: .4s;
+}
+
+input:checked + .slider .toggle-text {
+  left: -9px;
+}
+
+input:not(:checked) + .slider .toggle-text {
+  left: 9px;
 }
