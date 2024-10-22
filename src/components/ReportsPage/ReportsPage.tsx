@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import FilterForm from './FilterForm';
 import ConfiguredReportsTable from './ConfiguredReportsTable';
 import './styles/ReportsPage.css';
+import ReportsSummaryCard from './ReportsSummaryCard';
 
 interface IReport {
   reportName: string;
@@ -136,6 +137,7 @@ class ReportsPage extends Component<IReportsPageProps, IReportsPageState> {
           <h1>Configured Reports</h1>
           <button className="configure-report-button" onClick={this.props.onConfigureReport}>+ Configure Report</button>
         </div>
+        <ReportsSummaryCard />
         <FilterForm 
           instanceFilter={instanceFilter}
           countryFilter={countryFilter}
