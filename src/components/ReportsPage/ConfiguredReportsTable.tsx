@@ -8,6 +8,7 @@ interface IReport {
   lastUpdatedDate: string;
   updatedBy: string;
   lastRunDate: string;
+  lastRunStatus: string;
 }
 
 interface IConfiguredReportsTableProps {
@@ -26,9 +27,10 @@ class ConfiguredReportsTable extends Component<IConfiguredReportsTableProps> {
             <th>Report Name</th>
             <th>Instance</th>
             <th>Country</th>
+            <th>Last Run Date</th>
+            <th>Last Run Status</th>
             <th>Last Updated Date</th>
             <th>Updated By</th>
-            <th>Last Run Date</th>
           </tr>
         </thead>
         <tbody>
@@ -46,9 +48,14 @@ class ConfiguredReportsTable extends Component<IConfiguredReportsTableProps> {
                 <td>{report.reportName}</td>
                 <td>{report.instance}</td>
                 <td>{report.country}</td>
+                <td>{report.lastRunDate}</td>
+                <td>
+                  <span className={`status-button ${report.lastRunStatus.toLowerCase()}`}>
+                    {report.lastRunStatus}
+                  </span>
+                </td>
                 <td>{report.lastUpdatedDate}</td>
                 <td>{report.updatedBy}</td>
-                <td>{report.lastRunDate}</td>
               </tr>
             ))
           )}

@@ -32,3 +32,33 @@
   font-style: italic;
   color: #6c757d;
 }
+
+.status-button {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 15px;
+  font-size: 12px;
+  font-weight: bold;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.status-button.completed {
+  background-color: #b3d9b4;
+  color: #006633;
+}
+
+.status-button.running {
+  background-color: #b3d9ff;
+  color: #0033a0;
+}
+
+.status-button.failed {
+  background-color: #ffb3b3;
+  color: #cc0000;
+}
+
+.status-button.scheduled {
+  background-color: #ffe6b3;
+  color: #cc7a00;
+}

@@ -10,6 +10,7 @@ interface IReport {
   lastUpdatedDate: string;
   updatedBy: string;
   lastRunDate: string;
+  lastRunStatus: string;
 }
 
 interface IReportsPageProps {
@@ -44,7 +45,35 @@ class ReportsPage extends Component<IReportsPageProps, IReportsPageState> {
         country: "USA",
         lastUpdatedDate: "2023-05-01",
         updatedBy: "John Doe",
-        lastRunDate: "2023-05-10"
+        lastRunDate: "2023-05-10",
+        lastRunStatus: "Completed"
+      },
+      {
+        reportName: "Inventory Report",
+        instance: "Instance 2",
+        country: "Canada",
+        lastUpdatedDate: "2023-05-05",
+        updatedBy: "Jane Smith",
+        lastRunDate: "2023-05-12",
+        lastRunStatus: "Running"
+      },
+      {
+        reportName: "Customer Satisfaction Survey",
+        instance: "Instance 1",
+        country: "UK",
+        lastUpdatedDate: "2023-04-28",
+        updatedBy: "Mike Johnson",
+        lastRunDate: "2023-05-08",
+        lastRunStatus: "Failed"
+      },
+      {
+        reportName: "Monthly Financial Report",
+        instance: "Instance 3",
+        country: "Germany",
+        lastUpdatedDate: "2023-05-15",
+        updatedBy: "Anna Schmidt",
+        lastRunDate: "2023-05-20",
+        lastRunStatus: "Scheduled"
       },
       // ... (add more dummy reports here)
     ];
