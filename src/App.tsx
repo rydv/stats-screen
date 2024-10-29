@@ -3,7 +3,9 @@ import './App.css';
 import ConfigureReport from './components/ConfigureReport/ConfigureReport';
 import ReportDetails from './components/ReportDetails/ReportDetails';
 import ReportsPage from './components/ReportsPage/ReportsPage';
-
+import HomeIcon from '@mui/icons-material/Home';
+import SettingsIcon from '@mui/icons-material/Settings';
+import BarChartIcon from '@mui/icons-material/BarChart';
 interface AppState {
   currentScreen: 'reports' | 'configure' | 'details';
   reportOutput: any | null;
@@ -60,11 +62,9 @@ class App extends Component<{}, AppState> {
             <span className="header-text">STATS SCREEN</span>
           </div>
           <nav className="horizontal-menu">
-            <ul>
-              <li><a href="#" onClick={() => this.setState({ currentScreen: 'reports' })}>Home</a></li>
-              <li><a href="#" onClick={() => this.setState({ currentScreen: 'configure' })}>Configure Report</a></li>
-              <li><a href="#">Analytics</a></li>
-            </ul>
+            <HomeIcon className="nav-icon" onClick={() => this.setState({ currentScreen: 'reports' })} />
+            <SettingsIcon className="nav-icon" onClick={() => this.setState({ currentScreen: 'configure' })} />
+            <BarChartIcon className="nav-icon" />
           </nav>
         </header>
         {this.state.notification && (

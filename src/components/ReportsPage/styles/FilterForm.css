@@ -33,6 +33,10 @@
   border-radius: 4px;
 }
 
+.filter-group select option:hover {
+  background-color: #e6f3f9;
+}
+
 .search-row {
   width: 100%;
   display: flex;
@@ -44,6 +48,12 @@
   padding: 8px;
   border: 1px solid #c4d8e6;
   border-radius: 4px;
+  transition: border-color 0.3s;
+}
+
+.search-row input:focus {
+  border-color: #0f5f8c;
+  outline: none;
 }
 
 .clear-filters {
@@ -57,5 +67,5 @@
 }
 
 .clear-filters:hover {
-  background-color: #0d4d6e;
+  background-color: #a1cbe1;
 }

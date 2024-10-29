@@ -34,30 +34,21 @@ h1 {
   color: #333;
 }
 
-.horizontal-menu ul {
-  list-style-type: none;
-  padding: 0;
-  margin: 0;
+.horizontal-menu {
   display: flex;
+  align-items: center;
 }
 
-.horizontal-menu li {
-  margin-right: 20px;
-}
-
-.horizontal-menu a {
-  text-decoration: none;
-  color: #333;
-  font-weight: bold;
-}
-
-.horizontal-menu a:hover {
-  color: #007bff;
-}
-
-.home-icon {
+.nav-icon {
   font-size: 24px;
   color: #333;
+  margin-left: 20px;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.nav-icon:hover {
+  color: #007bff;
 }
 
 .notification-bar {
