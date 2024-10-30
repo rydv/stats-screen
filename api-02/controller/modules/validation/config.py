@@ -4,7 +4,6 @@ REQUIRED_HEADERS = [
     'value_date_flag', 'amount_flag', 'ls_flag', 'dc_flag'
 ]
 
-REFERENCE_HEADERS = [f'ref{i}' for i in range(1, 5)]
-STRING_HEADERS = [f'string{i}' for i in range(1, 51)]
+REF_HEADERS = [f'ref{i}' for i in range(1, 5)] + [f'string{i}' for i in range(1, 51)]
 
 INVALID_CATEGORY_VALUES = ['A', 'ALL', 'ANY']
