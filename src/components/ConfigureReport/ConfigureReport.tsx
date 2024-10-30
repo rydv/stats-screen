@@ -2,6 +2,8 @@ import React, { Component } from 'react';
 import FeaturesForm from './FeaturesForm';
 import UploadCard from './UploadCard';
 import './ConfigureReport.css';
+import ValidationPopup from './ValidationPopup';
+
 
 interface ConfigureReportProps {
   onSubmitSuccess: (output: any) => void;
@@ -14,6 +16,7 @@ interface ConfigureReportState {
   country: string;
   uploadedFile: string | null;
   enabled: boolean;
+  showValidationPopup: boolean;
 }
 
 class ConfigureReport extends Component<ConfigureReportProps, ConfigureReportState> {
@@ -23,6 +26,7 @@ class ConfigureReport extends Component<ConfigureReportProps, ConfigureReportSta
     country: '',
     uploadedFile: null,
     enabled: true,
+    showValidationPopup: false,
   };
 
   handleFeatureChange = (name: string, value: string | boolean) => {
@@ -38,10 +42,6 @@ class ConfigureReport extends Component<ConfigureReportProps, ConfigureReportSta
 
   handleToggle = () => {
     this.setState(prevState => ({ enabled: !prevState.enabled }));
-  };
-
-  handleValidate = () => {
-    console.log('Validating...');
   };
 
   handleSubmit = () => {
@@ -74,6 +74,12 @@ class ConfigureReport extends Component<ConfigureReportProps, ConfigureReportSta
     }, 2000);
   };
 
+  handleValidate = () => {
+      if (this.state.uploadedFile) {
+          this.setState({ showValidationPopup: true });
+      }
+  };
+
   render() {
     return (
       <div className="configure-report">
@@ -104,6 +110,18 @@ class ConfigureReport extends Component<ConfigureReportProps, ConfigureReportSta
             onFileUpload={this.handleFileUpload}
           />
         </div>
+        {this.state.showValidationPopup && (
+                <ValidationPopup
+                    onConfigure={this.handleSubmit}
+                    file={this.state.uploadedFile}
+                    formData={{
+                        reportName: this.state.reportName,
+                        instance: this.state.instance,
+                        country: this.state.country
+                    }}
+                    onClose={() => this.setState({ showValidationPopup: false })}
+                />
+            )}
       </div>
     );
   }

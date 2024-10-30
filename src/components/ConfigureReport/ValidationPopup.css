@@ -1,0 +1,209 @@
+/* ValidationPopup.css */
+:root {
+    --sc-primary: #0f5f8c;
+    --sc-secondary: #69a363;
+    --sc-background: #f0f8ff;
+    --sc-success: #86bf00;
+    --sc-error: #d23c3c;
+    --sc-text: #333333;
+  }
+  
+  .validation-popup-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(15, 95, 140, 0.15);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      backdrop-filter: blur(3px);
+  }
+  
+  .validation-popup {
+      background-color: white;
+      border-radius: 12px;
+      padding: 30px;
+      width: 90%;
+      max-width: 700px;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 4px 20px rgba(15, 95, 140, 0.1);
+  }
+  
+  .popup-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+      border-bottom: 2px solid var(--sc-background);
+      padding-bottom: 15px;
+  }
+  
+  .popup-header h2 {
+      color: var(--sc-primary);
+      font-size: 24px;
+      margin: 0;
+  }
+  
+  .close-button {
+      cursor: pointer;
+      color: var(--sc-primary);
+      transition: transform 0.2s;
+  }
+  
+  .close-button:hover {
+      transform: scale(1.1);
+  }
+  
+  .validation-content {
+      display: flex;
+      flex-direction: column;
+      gap: 25px;
+  }
+  
+  .form-summary {
+      background-color: var(--sc-background);
+      padding: 20px;
+      border-radius: 8px;
+  }
+  
+  .form-summary h3 {
+      color: var(--sc-primary);
+      margin-top: 0;
+      margin-bottom: 15px;
+  }
+  
+  .form-summary p {
+      margin: 8px 0;
+      color: var(--sc-text);
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: 10px;
+  }
+  
+  .status-indicator {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+      padding: 20px;
+  }
+  
+  .status-indicator.success {
+      color: var(--sc-success);
+  }
+  
+  .success-icon {
+      color: var(--sc-success);
+      font-size: 56px;
+      animation: scaleIn 0.3s ease-out;
+  }
+  
+  .error-icon {
+      color: var(--sc-error);
+      font-size: 56px;
+      animation: scaleIn 0.3s ease-out;
+  }
+  
+  .validation-errors {
+      background-color: rgba(210, 60, 60, 0.05);
+      padding: 20px;
+      border-radius: 8px;
+      border-left: 4px solid var(--sc-error);
+  }
+  
+  .validation-errors h4 {
+      color: var(--sc-error);
+      margin-top: 0;
+      margin-bottom: 15px;
+  }
+  
+  .validation-errors ul {
+      margin: 0;
+      padding-left: 20px;
+      color: var(--sc-text);
+  }
+  
+  .validation-errors li {
+      margin-bottom: 8px;
+      line-height: 1.4;
+  }
+  
+  @keyframes scaleIn {
+      from {
+          transform: scale(0);
+          opacity: 0;
+      }
+      to {
+          transform: scale(1);
+          opacity: 1;
+      }
+  }
+  
+  /* Loading Animation Styles */
+  .loading-spinner {
+      color: var(--sc-primary);
+  }
+  
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    padding: 10px;
+}
+
+.form-element {
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    overflow: hidden;
+    transition: background-color 0.2s ease;
+}
+
+.form-element:hover {
+    background-color: #f0f2f5;
+}
+
+.form-label {
+    padding: 8px 12px;
+    background-color: rgba(15, 95, 140, 0.05);
+    color: var(--sc-primary);
+    font-weight: 500;
+    border-bottom: 1px solid rgba(15, 95, 140, 0.1);
+}
+
+.form-value {
+    padding: 8px 12px;
+    color: var(--sc-text);
+    word-break: break-word;
+}
+
+@media (max-width: 768px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.popup-footer {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid var(--sc-background);
+}
+
+.configure-button {
+    background-color: var(--sc-primary) !important;
+    color: white !important;
+    padding: 8px 24px !important;
+    font-weight: 500 !important;
+    text-transform: none !important;
+    transition: background-color 0.2s ease !important;
+}
+
+.configure-button:hover {
+    background-color: #0d4f75 !important;
+}

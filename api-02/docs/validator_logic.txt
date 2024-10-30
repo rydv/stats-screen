@@ -1,0 +1,43 @@
+Here's a detailed summary of the rule sheet validation logic:
+
+File Structure Validation:
+
+Excel file with 'RULE SHEET' tab
+Remove empty rows and columns
+Validate required headers presence
+Rule Group Processing: Each rule (identified by unique_rule_id) undergoes sequential validation:
+
+Category Code:
+Single unique non-null value
+No commas allowed
+Not allowed: 'A', 'ALL', 'ANY'
+Fill empty cells with valid value
+Set ID:
+Single unique non-null value
+Fill empty cells with valid value
+Value Date Flag:
+Single unique non-null value
+Valid values: 'ALL', 'ANY', 'S', 'SAME', 'A', 'D', 'DIFFERENT'
+Fill empty cells with valid value
+Amount Flag:
+Single unique non-null value
+Basic values: 'ALL', 'ANY', 'S', 'SAME', 'A', 'D', 'DIFFERENT'
+Complex patterns: 'DIFFERENT|LE|', 'D|G|' etc.
+Fill empty cells with valid value
+OR/AND Flag:
+Single unique non-null value
+Valid values: 'AND', 'OR'
+Fill empty cells with valid value
+LS Flag:
+Multiple unique values allowed
+No empty values allowed
+Valid values: 'L', 'S', 'A', 'ANY', 'ALL'
+DC Flag:
+Multiple unique values allowed
+No empty values allowed
+Valid values: 'D', 'C', 'A', 'ANY', 'ALL', 'D WO', 'C WO'
+Output:
+
+Validated file saved with '_validated' suffix
+Error collection for invalid rules
+Success/failure status with detailed messages
