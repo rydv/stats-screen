@@ -1,3 +1,4 @@
+// ValidationPopup.tsx
 import React, { Component } from 'react';
 import CircularProgress from '@mui/material/CircularProgress';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -36,28 +37,14 @@ class ValidationPopup extends Component<ValidationPopupProps, ValidationPopupSta
 
     validateFile = async () => {
         try {
-            const formData = new FormData();
-            formData.append('file', this.props.file);
+            // Mock sleep for 2 seconds
+            await new Promise(resolve => setTimeout(resolve, 2000));
 
-            const response = await fetch('/api/validate-rule-sheet', {
-                method: 'POST',
-                body: formData
+            // Mock successful response
+            this.setState({ 
+                status: 'success',
+                isLoading: false 
             });
-
-            const data = await response.json();
-
-            if (data.status) {
-                this.setState({ 
-                    status: 'success',
-                    isLoading: false 
-                });
-            } else {
-                this.setState({ 
-                    status: 'validation-error',
-                    errors: data.validation_results.errors,
-                    isLoading: false 
-                });
-            }
         } catch (error) {
             this.setState({ 
                 status: 'error',
@@ -66,70 +53,129 @@ class ValidationPopup extends Component<ValidationPopupProps, ValidationPopupSta
         }
     };
 
-    renderFormElement = (label: string, value: string) => (
+    renderFormElement = (label: string, value: string, showStatus = false) => (
         <div className="form-element">
             <div className="form-label">{label}</div>
-            <div className="form-value">{value}</div>
+            <div className="form-value-container">
+                <div className="form-value text-ellipsis" title={value}>
+                    {value}
+                </div>
+                {showStatus && this.renderStatus()}
+            </div>
         </div>
     );
 
-    renderContent = () => {
-        const { status, errors, isLoading } = this.state;
-        const { formData } = this.props;
-
-        return (
-            <div className="validation-content">
-                <div className="form-summary">
-                    <h3>Report Configuration</h3>
-                    <div className="form-grid">
-                        {this.renderFormElement("Report Name", formData.reportName)}
-                        {this.renderFormElement("Instance", formData.instance)}
-                        {this.renderFormElement("Country", formData.country)}
-                        {this.renderFormElement("File", this.props.file.name)}
-                    </div>
-                </div>
-
-                <div className="validation-status">
-                    {isLoading && (
-                        <div className="status-indicator">
-                            <CircularProgress className="loading-spinner" />
-                            <p>Validating rule sheet...</p>
-                        </div>
-                    )}
-
-                    {!isLoading && status === 'success' && (
-                        <div className="status-indicator success">
-                            <CheckCircleIcon className="success-icon" />
-                            <p>Validation successful!</p>
-                        </div>
-                    )}
-
-                    {!isLoading && status === 'error' && (
-                        <div className="status-indicator error">
-                            <ErrorIcon className="error-icon" />
-                            <p>Internal server error occurred</p>
-                        </div>
-                    )}
-
-                    {!isLoading && status === 'validation-error' && (
-                        <div className="validation-errors">
-                            <ErrorIcon className="error-icon" />
-                            <h4>Validation Errors:</h4>
-                            <ul>
-                                {errors.map((error, index) => (
-                                    <li key={index}>{error}</li>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
-                </div>
-            </div>
-        );
+    renderStatus = () => {
+        const { status, isLoading } = this.state;
+        
+        if (isLoading) {
+            return <CircularProgress size={20} className="loading-spinner" />;
+        }
+        
+        if (status === 'success') {
+            return <CheckCircleIcon className="success-icon-small" />;
+        }
+        
+        return null;
     };
 
     render() {
-        const { status } = this.state;
+        const { status, errors, isLoading } = this.state;
+        const { formData } = this.props;
         
+        if (!isLoading && status === 'success') {
+            return (
+                <div className="validation-popup-overlay">
+                    <div className="validation-popup">
+                        <div className="popup-header">
+                            <h2>Rule Sheet Validation</h2>
+                            <CloseIcon 
+                                className="close-button" 
+                                onClick={this.props.onClose}
+                            />
+                        </div>
+                        
+                        <div className="validation-content">
+                            <div className="form-summary">
+                                <h3>Report Configuration</h3>
+                                <div className="form-grid">
+                                    {this.renderFormElement("Report Name", formData.reportName)}
+                                    {this.renderFormElement("Instance", formData.instance)}
+                                    {this.renderFormElement("Country", formData.country)}
+                                    {this.renderFormElement("File", this.props.file.name, true)}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="popup-footer">
+                            <Button 
+                                variant="contained"
+                                color="primary"
+                                onClick={this.props.onConfigure}
+                                className="configure-button"
+                            >
+                                Configure Report
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        if (!isLoading && (status === 'error' || status === 'validation-error')) {
+            return (
+                <div className="validation-popup-overlay">
+                    <div className="validation-popup">
+                        <div className="popup-header">
+                            <h2>Rule Sheet Validation</h2>
+                            <CloseIcon 
+                                className="close-button" 
+                                onClick={this.props.onClose}
+                            />
+                        </div>
+                        
+                        <div className="validation-content">
+                            <div className="form-summary">
+                                <h3>Report Configuration</h3>
+                                <div className="form-grid">
+                                    {this.renderFormElement("Report Name", formData.reportName)}
+                                    {this.renderFormElement("Instance", formData.instance)}
+                                    {this.renderFormElement("Country", formData.country)}
+                                    {this.renderFormElement("File", this.props.file.name)}
+                                </div>
+                            </div>
+
+                            <div className="validation-errors-container">
+                                <div className="validation-errors">
+                                    <ErrorIcon className="error-icon" />
+                                    <h4>{status === 'error' ? 'Internal Server Error' : 'Validation Errors:'}</h4>
+                                    {status === 'validation-error' && (
+                                        <ul>
+                                            {errors.map((error, index) => (
+                                                <li key={index}>{error}</li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="popup-footer">
+                            <Button 
+                                variant="contained"
+                                color="primary"
+                                onClick={this.props.onConfigure}
+                                className="configure-button"
+                                disabled
+                            >
+                                Configure Report
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
         return (
             <div className="validation-popup-overlay">
                 <div className="validation-popup">
@@ -140,18 +186,29 @@ class ValidationPopup extends Component<ValidationPopupProps, ValidationPopupSta
                             onClick={this.props.onClose}
                         />
                     </div>
-                    {this.renderContent()}
+                    
+                    <div className="validation-content">
+                        <div className="form-summary">
+                            <h3>Report Configuration</h3>
+                            <div className="form-grid">
+                                {this.renderFormElement("Report Name", formData.reportName)}
+                                {this.renderFormElement("Instance", formData.instance)}
+                                {this.renderFormElement("Country", formData.country)}
+                                {this.renderFormElement("File", this.props.file.name, true)}
+                            </div>
+                        </div>
+                    </div>
+
                     <div className="popup-footer">
-                        {status === 'success' && (
-                            <Button 
-                                variant="contained"
-                                color="primary"
-                                onClick={this.props.onConfigure}
-                                className="configure-button"
-                            >
-                                Configure Report
-                            </Button>
-                        )}
+                        <Button 
+                            variant="contained"
+                            color="primary"
+                            onClick={this.props.onConfigure}
+                            className="configure-button"
+                            disabled
+                        >
+                            Configure Report
+                        </Button>
                     </div>
                 </div>
             </div>
