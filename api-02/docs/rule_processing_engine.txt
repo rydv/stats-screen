@@ -1,0 +1,23 @@
+The rule processing engine handles validation and matching of transactions based on rule definitions provided in CSV/Excel format.
+
+Key components:
+
+Rule Sheet Structure:
+Common fields: rule_id, category_code, set_id, or_and_flag, value_date_flag, amount_flag
+Filter fields: ls_flag, dc_flag
+Reference fields: ref1-ref4, string1-string30 containing pattern matching expressions
+Rule Processing Flow:
+Rules are parsed using RuleBuilder
+Each rule can have multiple filters (legs)
+Fields are parsed using Field class to extract operations and patterns
+Rule type is identified based on field flags (PerfRef, ValueDate, Expression etc.)
+Appropriate rule strategy is applied to find matching transactions
+Pattern Matching:
+Supports various identifiers like |EXACT|, |EXP|, |FRMT|, |OP|, |PerfRef|
+Regular expressions are generated for pattern matching
+Values can be extracted and compared between filters
+Validation:
+Rule parameters are validated
+Field values and patterns are validated
+Transactions are filtered and matched based on rule criteria
+The engine provides a flexible framework for defining and processing complex matching rules while maintaining extensibility through strategy pattern implementation.

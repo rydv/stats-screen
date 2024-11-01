@@ -1,61 +1,47 @@
 import pandas as pd
-from rule_builder import RuleBuilder
-from rule_params import RuleParams
-from field import Field
+from typing import List
+from pydantic import ValidationError
 import traceback
+from controllers.matching_matrix_controller.config.config import *
+from controllers.matching_matrix_controller.modules.field import Field
+from controllers.matching_matrix_controller.modules.rule_params import RuleParams
+from controllers.matching_matrix_controller.modules.filter import Filter
+from controllers.matching_matrix_controller.modules.rule import Rule
+
+def build_rule(rule_id: str, group: pd.DataFrame) -> Rule:
+    first_row = group.iloc[0]
+    rule_params = RuleParams(
+        unique_rule_id=rule_id,
+        category_code=first_row['category_code'],
+        set_id=first_row['set_id'],
+        amount_check_flags={flag: first_row[flag] for flag in amount_columns_mapping.keys() if first_row[flag]},
+        value_date_flag=first_row['value_date_flag'],
+        or_and_flag=first_row['or_and_flag'],
+    )
+
+    filters = []
+    for _, row in group.iterrows():
+        reffields = list(set(row.keys()) & set(col_mapping.keys()))
+        fields = [Field(col_mapping[col], row[col]) for col in reffields]
+        filters.append(Filter(row['ls_flag'], row['dc_flag'], fields))
+
+    return Rule(rule_params, filters)
 
 def process_rules(file_path):
     csv_data = pd.read_csv(file_path).fillna("")
-    rule_builder = RuleBuilder()
-    valid_rules = []
-    rejected_rules = []
+    rules_to_process = []
 
-    current_rule_id = None
-    for _, row in csv_data.iterrows():
-        if current_rule_id != row['unique_rule_id']:
-            if current_rule_id is not None:
-                built_rule = rule_builder.build()
-                if built_rule:
-                    valid_rules.append(built_rule)
-                else:
-                    rejected_rules.append({"unique_rule_id": current_rule_id, "reason": "Failed to build rule"})
-            current_rule_id = row['unique_rule_id']
-            try:
-                rule_params = RuleParams(
-                    unique_rule_id=row['unique_rule_id'],
-                    category_code=row['category_code'],
-                    set_id=row['set_id'],
-                    amount_check_flags={flag: row[flag] for flag in amount_columns_mapping.keys() if row[flag]},
-                    value_date_flag=row['value_date_flag'],
-                    or_and_flag=row['or_and_flag'],
-                )
-                rule_builder.set_params(rule_params)
-            except ValidationError as e:
-                rejected_rules.append({"unique_rule_id": row['unique_rule_id'], "reason": str(e)})
-                continue
-
-        l_s = row['ls_flag']
-        d_c = row['dc_flag']
-        reffields = list(set(row.keys()) & set(col_mapping.keys()))
-        fields = [Field(col_mapping[col], col, row[col]) for col in reffields]
-        rule_builder.add_filter(l_s, d_c, fields)
-
-    if current_rule_id is not None:
-        built_rule = rule_builder.build()
-        if built_rule:
-            valid_rules.append(built_rule)
-        else:
-            rejected_rules.append({"unique_rule_id": current_rule_id, "reason": "Failed to build rule"})
-
-    # print(f"'valid_rules': {valid_rules}, 'rejected_rules': {rejected_rules}")
+    for rule_id, group in csv_data.groupby('unique_rule_id'):
+        try:
+            rule = build_rule(rule_id, group)
+            rules_to_process.append(rule)
+        except ValidationError as e:
+            print(f"Skipping rule {rule_id} due to validation error: {str(e)}")
+            continue
 
     rule_matches = []
-    # matched_rels_all = []
-
-    matches_df = pd.DataFrame()
     print("Processing valid rules...")
-    # for rule_type, rules in valid_rules.items():
-    for rule in valid_rules:
+    for rule in rules_to_process:
         print(f"Rule: {rule.rule_params.unique_rule_id}")
         matches_df = rule.find_matches()
         if len(matches_df):
@@ -69,7 +55,6 @@ def process_rules(file_path):
             res_df.sort_values(by='RELATIONSHIP_ID', inplace=True)
             res_df.drop_duplicates(subset='ITEM_ID', keep='first', inplace=True)
             res_df.to_csv(f'{reports_path}/manual_rule_analysis_report_singapore_20240702.csv', index=False)
-            # report_name = 'manual_rule_analysis_report_singapore_20240702.csv'
             run_summary = res_df['Rule_Id'].value_counts().to_dict()
             run_summary = {k: int(v) for k, v in run_summary.items()}
         else:
@@ -86,10 +71,9 @@ def process_rules(file_path):
         'status': True,
         'output': {
             "matches": res_df,
-            'valid_rules': valid_rules,
-            'rejected_rules': rejected_rules,
+            'rules_processed': rules_to_process,
             "run_summary": {
-                "matches": f"{len(run_summary)}/{sum(len(rules) for rules in valid_rules.values())}",
+                "matches": f"{len(run_summary)}/{len(rules_to_process)}",
                 "matches_count": run_summary,
             }
         },
