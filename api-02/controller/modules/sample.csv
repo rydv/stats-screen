@@ -1,0 +1,43 @@
+import re
+
+def add_positive_lookaheads(pattern: str) -> str:
+    # Match patterns with optional parentheses around the character class
+    match = re.search(r'\|\w+\|\(?\[([A-Za-z0-9]+)\]\{\d+,\d+\}\)?', pattern)
+    
+    if not match:
+        raise ValueError("Invalid pattern format. Expected format similar to '|EXP|([A-Za-z0-9]{12,16})' or '|EXP|[A-Za-z0-9]{12,16}'")
+    
+    char_class = match.group(1)
+    
+    # Determine lookaheads based on character classes in the pattern
+    lookaheads = []
+    if 'A-Za-z' in char_class:  # At least one letter (uppercase or lowercase)
+        lookaheads.append(r'(?=.*[A-Za-z])')
+    if 'A-Z' in char_class:     # At least one uppercase letter
+        lookaheads.append(r'(?=.*[A-Z])')
+    if 'a-z' in char_class:     # At least one lowercase letter
+        lookaheads.append(r'(?=.*[a-z])')
+    if '0-9' in char_class:     # At least one digit
+        lookaheads.append(r'(?=.*\d)')
+    
+    # Combine lookaheads and modify the original pattern accordingly
+    lookahead_str = ''.join(lookaheads)
+    # Retain parentheses if they were present in the original pattern
+    if pattern.startswith('|EXP|('):
+        modified_pattern = f'|EXP|({lookahead_str}[{char_class}]{{12,16}})'
+    else:
+        modified_pattern = f'|EXP|{lookahead_str}[{char_class}]{{12,16}}'
+    
+    return modified_pattern
+
+# Test cases
+patterns = [
+    '|EXP|([A-Za-z0-9]{12,16})',   # With parentheses
+    '|EXP|[A-Za-z0-9]{12,16}',     # Without parentheses
+    '|EXP|([A-Za-z]{12,16})',      # With parentheses, letters only
+    '|EXP|[A-Z0-9]{12,16}',        # Without parentheses, uppercase and digits
+]
+
+for pattern in patterns:
+    print(f"Original: {pattern}")
+    print(f"Modified: {add_positive_lookaheads(pattern)}\n")
